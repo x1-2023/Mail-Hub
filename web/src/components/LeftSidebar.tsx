@@ -40,7 +40,7 @@ export const LeftSidebar = () => {
   }, [searchEmail]);
 
   // Fetch Available Domains
-  const { data: availableDomains = [] } = useQuery({
+  const { data: availableDomains = [], isLoading: domainsLoading, isError: domainsError } = useQuery({
     queryKey: ["domains"],
     queryFn: async () => {
       try {
@@ -56,7 +56,9 @@ export const LeftSidebar = () => {
     }
   });
 
-  const displayDomains = availableDomains.length > 0 ? availableDomains : ["Loading..."];
+  // Calculate stats for UI
+  const displayDomains = availableDomains;
+  const domainCount = domainsLoading ? "..." : displayDomains.length;
 
   // Ensure selectedDomain is set
   useEffect(() => {
@@ -144,13 +146,21 @@ export const LeftSidebar = () => {
           <AccordionTrigger className="px-5 py-4 hover:no-underline">
             <div className="flex items-center justify-between w-full">
               <h2 className="text-sm font-black">{t("sidebar.availableDomains").toUpperCase()}</h2>
-              <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded-md border-2 border-border">
-                {displayDomains.length}
+              <span className={`text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded-md border-2 border-border ${domainsError ? "bg-destructive text-white" : ""}`}>
+                {domainsError ? "ERR" : domainCount}
               </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-5 pb-4">
             <div className="flex flex-wrap gap-2">
+              {domainsLoading && (
+                <div className="text-xs font-bold animate-pulse text-muted-foreground">Loading domains...</div>
+              )}
+
+              {!domainsLoading && displayDomains.length === 0 && (
+                <div className="text-xs font-bold text-destructive">No domains found.</div>
+              )}
+
               {displayDomains.map((d: string) => (
                 <button
                   key={d}
