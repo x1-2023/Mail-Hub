@@ -13,8 +13,10 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the binary
+# Build the main API binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+# Build the SMTP Server binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o smtp_server ./cmd/smtp/main.go
 # Build the admin creation tool
 RUN CGO_ENABLED=0 GOOS=linux go build -o create_admin ./scripts/create_admin.go
 
@@ -23,15 +25,20 @@ FROM alpine:latest
 
 WORKDIR /root/
 
-# Install runtime dependencies (check if needed for healthcheck or debugging)
+# Install runtime dependencies
 RUN apk add --no-cache ca-certificates curl
 
 # Copy binaries from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/smtp_server .
 COPY --from=builder /app/create_admin .
+COPY entrypoint.sh .
 
-# Expose the API Port (Variable reference matching env)
-EXPOSE 8080
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
-# Run
-CMD ["./main"]
+# Expose API (8080/3000) and SMTP (2525)
+EXPOSE 8080 2525
+
+# Run both services
+CMD ["./entrypoint.sh"]
