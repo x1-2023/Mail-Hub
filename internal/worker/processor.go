@@ -12,6 +12,7 @@ import (
 	"mailhub/internal/smtp"
 	"mailhub/pkg/database"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jhillyerd/enmime"
 )
@@ -24,7 +25,6 @@ func HandleEmailTask(ctx context.Context, t *asynq.Task) error {
 	// Check producer code again.
 	// producer.go: `task := asynq.NewTask("email:process", nil` -> Payload is nil?
 	// Ah, I set payload to nil in v1 producer draft. I need to fix producer first!
-
 	// BUT, anticipating the fix, let's assume JSON payload
 	var payload struct {
 		Mime   string `json:"mime"`
@@ -74,11 +74,10 @@ func HandleEmailTask(ctx context.Context, t *asynq.Task) error {
 	}
 
 	// 3. Save Email Metadata
-	// Re-fetch alias to be sure? We already fetched it in step 2.
-	// NOTE: We need to ensure we fetched OwnerType in step 2.
-	// Step 2 query: First(&alias). GORM fetches all fields by default.
-
 	email := &models.Email{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		AliasID:    alias.ID,
 		Sender:     payload.Sender,
 		Subject:    env.GetHeader("Subject"),
@@ -117,10 +116,6 @@ func HandleEmailTask(ctx context.Context, t *asynq.Task) error {
 		BodyText: env.Text,
 		BodyHTML: env.HTML,
 		Headers:  []byte("{}"), // Serialize headers if needed
-	}
-
-	if err := database.DB.Create(content).Error; err != nil {
-		return err
 	}
 
 	if err := database.DB.Create(content).Error; err != nil {
