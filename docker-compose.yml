@@ -7,7 +7,6 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     restart: always
-    privileged: true
     env_file:
       - .env
     environment:
