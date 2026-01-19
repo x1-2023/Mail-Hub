@@ -64,3 +64,5 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
+
+replace golang.org/x/exp => golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3
