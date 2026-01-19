@@ -11,9 +11,9 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	golang.org/x/crypto v0.31.0
-	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.31.1
-	modernc.org/sqlite v1.44.2
+	gorm.io/driver/postgres v1.5.11
+	gorm.io/gorm v1.25.12
+	modernc.org/sqlite v1.34.5
 )
 
 require (
