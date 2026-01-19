@@ -6,6 +6,9 @@
 # Start SMTP Server in background
 ./smtp_server &
 
+# Start Worker in background
+./worker &
+
 # Wait for any process to exit
 wait -n
 
