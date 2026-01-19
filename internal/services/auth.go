@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -66,6 +67,9 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 	}
 
 	user := &models.User{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		Email:        email,
 		Username:     userUsername,
 		PasswordHash: string(hashed),

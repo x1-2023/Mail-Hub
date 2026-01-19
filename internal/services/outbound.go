@@ -7,6 +7,7 @@ import (
 	"mailhub/pkg/database"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
 
@@ -26,6 +27,9 @@ func InitOutboundService(redisAddr string) {
 func (s *OutboundService) Enqueue(sender, recipient, subject, body string) error {
 	// 1. Persist Record
 	msg := models.OutboundMessage{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		Sender:    sender,
 		Recipient: recipient,
 		Subject:   subject,

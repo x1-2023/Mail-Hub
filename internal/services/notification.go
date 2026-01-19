@@ -8,6 +8,8 @@ import (
 	"mailhub/pkg/database"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var Notifications *NotificationService
@@ -58,6 +60,9 @@ func (s *NotificationService) Unsubscribe(userID string, ch chan string) {
 // Create persists notification and pushes to streaming clients
 func (s *NotificationService) Create(userID *string, notifType, message string) error {
 	notif := models.Notification{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		UserID:  userID,
 		Type:    notifType,
 		Message: message,

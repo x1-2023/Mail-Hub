@@ -282,6 +282,9 @@ func (s *AdminService) GetSpamFilters() ([]models.SpamFilter, error) {
 
 func (s *AdminService) CreateSpamFilter(rule, filterType, action string) (*models.SpamFilter, error) {
 	filter := &models.SpamFilter{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		Rule:     rule,
 		Type:     filterType,
 		Action:   action,
