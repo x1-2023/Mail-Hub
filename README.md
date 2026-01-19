@@ -111,5 +111,19 @@ For Production with SSL:
 3.  Enable "Websockets Support" and "Block Common Exploits".
 4.  Request SSL Certificate.
 
+## 🗄️ External Database Setup (For Option 2)
+
+If you use your own PostgreSQL:
+1.  **Create Database**: Create a DB named `maildb` (or match your `.env`).
+2.  **Extensions**: You MUST enable `pgcrypto` for UUID generation:
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    ```
+    *Run this SQL in your `maildb` database before starting the backend.*
+
+If you use your own Redis:
+1.  **Persistence**: Enable AOF or RDB persistence in `redis.conf` to prevent data loss on restart (Queue uses Redis).
+2.  **Version**: Redis 6.x or higher is recommended.
+
 ## License
 MIT
