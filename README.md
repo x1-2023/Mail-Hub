@@ -56,40 +56,60 @@ npm install
 npm run dev
 ```
 
-## Docker Deployment (Production)
+## 🚀 Deployment Guide
 
-This project includes a full Docker setup for easy deployment.
+### Option 1: Quick Start (Docker All-in-One)
+Best for testing or simple deployments. Includes Database and Redis.
 
-### 1. Configuration
-Check `.env` and set your desired ports and domains:
-```bash
-API_PORT=3000   # Exposed API Port
-WEB_PORT=4000   # Exposed Frontend Port
-DOMAIN=yourdomain.com
-```
+1.  **Clone & Config**
+    ```bash
+    git clone https://github.com/x1-2023/Mail-Hub.git
+    cd Mail-Hub
+    cp .env.example .env
+    ```
+    *Edit `.env` to set your domains and passwords.*
 
-### 2. Build & Run
-```bash
-# Build and start all services (Backend, Frontend, Postgres, Redis)
-docker-compose up -d --build
-```
+2.  **Start System**
+    ```bash
+    docker-compose up -d --build
+    ```
 
-### 3. Nginx Proxy Manager Setup
-If you are using Nginx Proxy Manager:
-- **Frontend**: Forward `hotmailv.com` -> `http://<HOST_IP>:4000`
-- **Backend**: Forward `api.hotmailv.com` -> `http://<HOST_IP>:3000`
-- Enables SSL (HTTPS) for both domains easily.
+3.  **Create Owner Account**
+    Runs the setup script inside the container to create `admin@mailhub.dev` / `admin123`.
+    ```bash
+    docker-compose exec backend ./create_admin
+    ```
 
-## Documentation
+4.  **Access**
+    *   **Dashboard**: `http://localhost:3000` (or your configured domain)
+    *   **Login**: Use the admin credentials above.
 
-Full API Documentation is available in [API_DOCS.md](API_DOCS.md).
+### Option 2: Advanced (External DB/Redis)
+If you have an existing robust database infrastructure.
 
-## Project Structure
+1.  **Edit `.env`**
+    Set `DATABASE_URL` and `REDIS_ADDR` to point to your external services.
 
-- `cmd/`: Entry points (api, worker, smtp).
-- `internal/`: Core logic (handlers, models, services).
-- `web/`: Frontend application.
-- `pkg/`: Shared libraries.
+2.  **Edit `docker-compose.yml`**
+    *   Comment out (`#`) the `db` and `redis` services.
+    *   Remove the `depends_on` section in `backend`.
+    *   **Important**: Remove the `DATABASE_URL` and `REDIS_ADDR` environment overrides in the `backend` service (lines 46-47) so it uses your `.env` values.
+
+3.  **Start System**
+    ```bash
+    docker-compose up -d --build
+    ```
+
+### Option 3: Manual (No Docker)
+See "Run Backend" section above for local dev setup.
+
+## 🛠 Nginx Proxy Manager (Example)
+For Production with SSL:
+
+1.  **Backend API**: Forward `api.yourdomain.com` -> `http://<SERVER_IP>:3000`
+2.  **Frontend**: Forward `yourdomain.com` -> `http://<SERVER_IP>:4000`
+3.  Enable "Websockets Support" and "Block Common Exploits".
+4.  Request SSL Certificate.
 
 ## License
 MIT

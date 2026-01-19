@@ -15,6 +15,8 @@ COPY . .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+# Build the admin creation tool
+RUN CGO_ENABLED=0 GOOS=linux go build -o create_admin ./scripts/create_admin.go
 
 # Final Stage
 FROM alpine:latest
@@ -24,8 +26,9 @@ WORKDIR /root/
 # Install runtime dependencies (check if needed for healthcheck or debugging)
 RUN apk add --no-cache ca-certificates curl
 
-# Copy binary from builder
+# Copy binaries from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/create_admin .
 
 # Expose the API Port (Variable reference matching env)
 EXPOSE 8080
