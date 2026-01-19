@@ -1,38 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER:-mailuser}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
-      POSTGRES_DB: ${DB_NAME:-maildb}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432" # Exposed to host if needed
-    networks:
-      - awf-mail-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mailuser}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # 2. Redis
-  redis:
-    image: redis:alpine
-    restart: always
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - awf-mail-network
-
-  # 3. Backend API
+  # 1. Backend API
   backend:
     build:
       context: .
@@ -41,19 +10,10 @@ services:
     env_file:
       - .env
     environment:
-      # Override DB/Redis to use internal Docker hostnames
-      # Users can still use .env for other things, but these ensure Docker connectivity
-      - DATABASE_URL=host=db user=${DB_USER:-mailuser} password=${DB_PASSWORD:-secure_password} dbname=${DB_NAME:-maildb} port=5432 sslmode=disable TimeZone=Asia/Ho_Chi_Minh
-      - REDIS_ADDR=redis:6379
       - PORT=8080 # Internal container port
     ports:
       - "${API_PORT:-8080}:8080"
       - "${SMTP_PORT:-2525}:2525"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
     networks:
       - awf-mail-network
 
