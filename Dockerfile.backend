@@ -1,0 +1,34 @@
+# Builder Stage
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Copy Go modules manifests
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+
+# Final Stage
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Install runtime dependencies (check if needed for healthcheck or debugging)
+RUN apk add --no-cache ca-certificates curl
+
+# Copy binary from builder
+COPY --from=builder /app/main .
+
+# Expose the API Port (Variable reference matching env)
+EXPOSE 8080
+
+# Run
+CMD ["./main"]

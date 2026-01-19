@@ -137,3 +137,95 @@ Admin:
 - Clear service separation
 - No unnecessary abstractions
 - Production-ready error handling
+
+---
+
+## Detailed Schema Reference (Recommended)
+
+### 1. `users`
+- `id` (UUID, PK)
+- `email` (Unique)
+- `password_hash`
+- `role` (user/admin)
+- `created_at`
+
+### 2. `domains`
+- `id` (UUID, PK)
+- `domain` (string, Unique) - e.g. "mailhub.com"
+- `is_public` (boolean) - anonymous users can use?
+- `owner_id` (UUID, FK -> users.id, nullable) - if custom domain
+- `verified_at` (timestamp, nullable)
+
+### 3. `aliases`
+- `id` (UUID, PK)
+- `local_part` (string)
+- `domain_id` (FK -> domains.id)
+- `user_id` (FK -> users.id, nullable)
+- `is_active` (boolean)
+- `expires_at` (timestamp, nullable) - for anon aliases
+- `created_at`
+- Unique(local_part, domain_id)
+
+### 4. `emails`
+- `id` (UUID, PK)
+- `alias_id` (FK -> aliases.id)
+- `sender` (string)
+- `subject` (string)
+- `snippet` (string)
+- `is_read` (boolean)
+- `is_starred` (boolean)
+- `received_at` (timestamp)
+- `fingerprint` (string, hash of content) - for deduplication
+
+### 5. `email_contents`
+- `email_id` (FK -> emails.id, PK)
+- `body_text` (text)
+- `body_html` (text)
+- `headers` (jsonb)
+
+### 6. `api_keys`
+- `id` (UUID, PK)
+- `user_id` (FK -> users.id)
+- `key_hash` (string)
+- `masked_key` (string)
+- `last_used_at` (timestamp)
+
+### 7. `notifications`
+- `id` (UUID, PK)
+- `user_id` (FK -> users.id)
+- `type` (info/warning/error)
+- `message` (string)
+- `is_read` (boolean)
+- `created_at`
+
+### 8. `plans`
+- `id` (string, PK) - free, pro
+- `max_aliases` (int)
+- `max_retention_days` (int)
+- `allow_custom_domain` (boolean)
+
+### 9. `user_subscriptions`
+- `user_id` (FK -> users.id, PK)
+- `plan_id` (FK -> plans.id)
+- `starts_at`
+- `ends_at`
+
+### 10. `anon_access_tokens`
+- `token` (string, PK) - secure random string
+- `alias_id` (FK -> aliases.id)
+- `expires_at` (timestamp) - default 24h
+
+### 11. `audit_logs`
+- `id` (UUID, PK)
+- `user_id` (FK, nullable)
+- `action` (string)
+- `target_resource` (string)
+- `ip_address` (string)
+- `created_at`
+
+### 12. `outbound_messages` (Audit)
+- `id` (UUID, PK)
+- `sender_alias_id` (FK)
+- `recipient` (string)
+- `subject` (string)
+- `sent_at`

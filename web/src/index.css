@@ -1,0 +1,288 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+
+  /* Theme: Lavender (Default - Demo Match) */
+  :root,
+  [data-theme="lavender"] {
+    --background: 268 60% 92%;
+    /* Soft Lavender Background */
+    --foreground: 260 40% 10%;
+    /* Dark Purple-Black Text */
+
+    --card: 0 0% 100%;
+    /* White Cards */
+    --card-foreground: 260 40% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 40% 10%;
+
+    --primary: 47 100% 60%;
+    /* Vibrant Yellow (Demo CTAs) */
+    --primary-foreground: 260 40% 10%;
+
+    --secondary: 260 60% 85%;
+    /* Soft Purple (Secondary Buttons) */
+    --secondary-foreground: 260 40% 20%;
+
+    --muted: 260 20% 96%;
+    --muted-foreground: 260 20% 50%;
+
+    --accent: 200 80% 85%;
+    /* Soft Blue (Address Card) */
+    --accent-foreground: 200 40% 20%;
+
+    --destructive: 0 85% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 20% 20%;
+    /* Stronger borders for Brutalism */
+    --input: 260 20% 20%;
+    --ring: 268 60% 70%;
+
+    --radius: 0.625rem;
+
+    --brutalist-shadow: 3px 3px 0px;
+    --brutalist-shadow-hover: 4px 4px 0px;
+    --brutalist-border: 2px;
+    --theme-preview: 270 60% 70%;
+  }
+
+  /* Theme: Hacker Mode (Dark Cyberpunk) */
+  [data-theme="hacker"] {
+    --background: 220 30% 8%;
+    --foreground: 150 100% 80%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 150 100% 80%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 150 100% 80%;
+
+    --primary: 150 100% 60%;
+    --primary-foreground: 220 30% 8%;
+
+    --secondary: 280 100% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 150 50% 60%;
+
+    --accent: 150 100% 50%;
+    --accent-foreground: 220 30% 8%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 100% 50%;
+    --input: 150 100% 50%;
+    --ring: 150 100% 60%;
+
+    --radius: 0.625rem;
+
+    --brutalist-shadow: 3px 3px 0px;
+    --brutalist-shadow-hover: 5px 5px 0px;
+    --brutalist-border: 2px;
+    --theme-preview: 150 100% 50%;
+  }
+
+  /* Theme: Old School Paper (Retro/Vintage) */
+  [data-theme="paper"] {
+    --background: 40 30% 96%;
+    --foreground: 30 20% 15%;
+
+    --card: 40 40% 98%;
+    --card-foreground: 30 20% 15%;
+
+    --popover: 40 40% 98%;
+    --popover-foreground: 30 20% 15%;
+
+    --primary: 25 90% 55%;
+    --primary-foreground: 40 40% 98%;
+
+    --secondary: 0 60% 50%;
+    --secondary-foreground: 40 40% 98%;
+
+    --muted: 40 20% 90%;
+    --muted-foreground: 30 15% 40%;
+
+    --accent: 25 90% 55%;
+    --accent-foreground: 40 40% 98%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 30% 25%;
+    --input: 30 30% 25%;
+    --ring: 25 90% 55%;
+
+    --radius: 0.25rem;
+
+    --brutalist-shadow: 4px 4px 0px;
+    --brutalist-shadow-hover: 5px 5px 0px;
+    --brutalist-border: 3px;
+    --theme-preview: 25 90% 55%;
+  }
+
+  /* Theme: Ocean Breeze (Calm/Professional) */
+  [data-theme="ocean"] {
+    --background: 210 30% 96%;
+    --foreground: 210 50% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 50% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 50% 20%;
+
+    --primary: 220 90% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 30% 85%;
+    --secondary-foreground: 210 50% 20%;
+
+    --muted: 210 20% 92%;
+    --muted-foreground: 210 30% 45%;
+
+    --accent: 180 60% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 40% 30%;
+    --input: 210 40% 30%;
+    --ring: 220 90% 55%;
+
+    --radius: 0.625rem;
+
+    --brutalist-shadow: 2px 2px 0px;
+    --brutalist-shadow-hover: 3px 3px 0px;
+    --brutalist-border: 2px;
+    --theme-preview: 220 90% 55%;
+  }
+
+  /* Theme: Pop Art (High Contrast) */
+  [data-theme="popart"] {
+    --background: 50 100% 55%;
+    --foreground: 0 0% 5%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 5%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 5%;
+
+    --primary: 350 90% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 100% 45%;
+    --secondary-foreground: 0 0% 5%;
+
+    --muted: 50 50% 80%;
+    --muted-foreground: 0 0% 30%;
+
+    --accent: 350 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 5%;
+    --input: 0 0% 5%;
+    --ring: 350 90% 55%;
+
+    --radius: 0rem;
+
+    --brutalist-shadow: 5px 5px 0px;
+    --brutalist-shadow-hover: 7px 7px 0px;
+    --brutalist-border: 3px;
+    --theme-preview: 350 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  /* Theme preview dots */
+  .theme-preview-lavender {
+    background-color: hsl(270 60% 70%);
+  }
+
+  .theme-preview-hacker {
+    background-color: hsl(150 100% 50%);
+  }
+
+  .theme-preview-paper {
+    background-color: hsl(25 90% 55%);
+  }
+
+  .theme-preview-ocean {
+    background-color: hsl(220 90% 55%);
+  }
+
+  .theme-preview-popart {
+    background-color: hsl(350 90% 55%);
+  }
+}
+
+@layer utilities {
+  .brutalist-card {
+    @apply bg-card border-[2px] border-border rounded-[var(--radius)];
+    box-shadow: var(--brutalist-shadow) hsl(var(--border) / 0.8);
+  }
+
+  .brutalist-button {
+    @apply border-[2px] border-border rounded-[var(--radius)] font-bold uppercase tracking-wide;
+    box-shadow: var(--brutalist-shadow) hsl(var(--border) / 0.8);
+    transition: all 0.15s ease;
+  }
+
+  .brutalist-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--brutalist-shadow-hover) hsl(var(--border) / 0.8);
+  }
+
+  .brutalist-button:active {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0px hsl(var(--border) / 0.8);
+  }
+
+  .brutalist-input {
+    @apply border-[2px] border-border rounded-[var(--radius)] bg-card px-4 py-2;
+    box-shadow: 2px 2px 0px hsl(var(--border) / 0.6);
+  }
+
+  .brutalist-input:focus {
+    outline: none;
+    box-shadow: var(--brutalist-shadow) hsl(var(--border) / 0.8);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  }
+}
