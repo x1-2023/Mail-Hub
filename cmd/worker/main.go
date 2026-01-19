@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 	"time"
@@ -73,13 +72,4 @@ func main() {
 	if err := srv.Run(mux); err != nil {
 		log.Fatal("Could not start worker server: ", err)
 	}
-}
-
-func handleEmailTask(ctx context.Context, t *asynq.Task) error {
-	log.Printf("Processing Email Task: %s", t.Type())
-
-	// TODO: Parse MIME, Store to DB, Push SSE
-	// This is where the heavy lifting happens "Lazy Content"
-
-	return nil
 }
