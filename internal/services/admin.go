@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"gorm.io/gorm"
 )
@@ -142,6 +143,9 @@ func (s *AdminService) GetDomains() ([]models.Domain, error) {
 
 func (s *AdminService) CreateDomain(domain string, isPublic bool) (*models.Domain, error) {
 	d := &models.Domain{
+		Base: models.Base{
+			ID: uuid.New().String(),
+		},
 		Domain:   domain,
 		IsPublic: isPublic,
 	}
