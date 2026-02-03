@@ -5,6 +5,7 @@ import API from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch"; // Added Switch
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -72,6 +73,25 @@ const SettingsTab = () => {
     </div>
   );
 
+  const renderSwitch = (key: string, label: string, desc: string) => (
+    <div key={key} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 hover:bg-white transition-colors">
+      <div className="space-y-1 flex-1">
+        <Label htmlFor={key} className="font-bold text-gray-700">{label}</Label>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          id={key}
+          checked={localSettings[key] === "true"}
+          onCheckedChange={(checked) => {
+            handleChange(key, String(checked));
+            updateMutation.mutate({ key, value: String(checked) });
+          }}
+        />
+      </div>
+    </div>
+  );
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -114,6 +134,7 @@ const SettingsTab = () => {
             {renderField("max_emails_per_alias", "Rolling Buffer Limit", "Max non-starred emails per alias (default: 100)")}
             {renderField("star_cap_per_user", "Star Cap", "Max starred emails per user/alias (default: 50)")}
             {renderField("max_aliases_per_user", "Max Aliases", "Max aliases per user account (default: 10)")}
+            {renderSwitch("allow_legacy_adoption", "Orphan Adoption", "Auto-create alias for incoming mails to unknown users")}
           </CardContent>
         </Card>
       </div>
