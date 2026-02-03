@@ -59,6 +59,7 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New())
 	app.Use(recover.New())
+	app.Use(middleware.LimitGlobal()) // Post-Audit Security: Global Rate Limit
 
 	// 4. Routes
 	api := app.Group("/api")
@@ -70,15 +71,15 @@ func main() {
 	// Auth Routes
 	authHandler := handlers.NewAuthHandler()
 	auth := api.Group("/auth")
-	auth.Post("/register", authHandler.Register)
-	auth.Post("/login", authHandler.Login)
+	auth.Post("/register", middleware.LimitStrict(), authHandler.Register)
+	auth.Post("/login", middleware.LimitStrict(), authHandler.Login)
 
 	// Anon Routes
 	anonHandler := handlers.NewAnonHandler()
 	mailHandler := handlers.NewMailHandler()
 
 	anon := api.Group("/anon")
-	anon.Post("/address", middleware.OptionalAuth(), anonHandler.CreateAddress)
+	anon.Post("/address", middleware.LimitStrict(), middleware.OptionalAuth(), anonHandler.CreateAddress)
 	anon.Get("/domains", anonHandler.GetDomains)
 	anon.Get("/config", anonHandler.GetPublicConfig)
 	anon.Get("/messages", middleware.AnonProtected(), mailHandler.GetMessages)
