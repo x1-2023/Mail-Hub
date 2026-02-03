@@ -95,6 +95,7 @@ func (s *SettingsService) InitializeDefaults() {
 		"donate_account_number":  "9999999999",
 		"donate_account_name":    "MAILHUB DONATE",
 		"donate_message":         "Mọi sự đóng góp đều giúp chúng tôi duy trì server và phát triển tính năng mới.",
+		"allow_legacy_adoption":  "false",
 	}
 
 	for k, v := range defaults {

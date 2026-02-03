@@ -87,16 +87,18 @@ Nếu thành công, nó sẽ báo:
 
 ### Nếu dùng Nginx Proxy Manager:
 
-**Host 1: Frontend (Giao diện)**
+**Host 1: Frontend (Giao diện chính)**
 *   **Domain Names**: `hotmailv.com` (hoặc domain của bạn)
-*   **Forward Host**: `172.17.0.1` (IP của Docker Host Gateway) hoặc IP LAN của server.
-*   **Forward Port**: `4000` (Trùng với `WEB_PORT` trong .env)
-*   **SSL**: Request chứng chỉ Let's Encrypt. Bật "Force SSL".
+*   **Scheme**: `http`
+*   **Forward Host**: `192.168.1.101` (IP LAN của Server - Đừng dùng localhost hay 127.0.0.1)
+*   **Forward Port**: `4000`
+*   **SSL**: Request chứng chỉ Let's Encrypt. Bật "Force SSL" & "Websockets Support".
 
-**Host 2: Backend (API)**
+**Host 2: Backend (API Subdomain)**
 *   **Domain Names**: `api.hotmailv.com`
-*   **Forward Host**: `172.17.0.1` (IP Docker Host)
-*   **Forward Port**: `3000` (Trùng với `API_PORT` trong .env)
+*   **Scheme**: `http`
+*   **Forward Host**: `192.168.1.101` (IP LAN của Server)
+*   **Forward Port**: `3000`
 *   **SSL**: Request chứng chỉ Let's Encrypt. Bật "Force SSL".
 
 ### Kiểm tra:
@@ -111,6 +113,21 @@ git pull                   # 1. Tải code mới
 docker-compose down        # 2. Tắt container cũ
 docker-compose up -d --build # 3. Chạy lại
 ```
+
+## 8. Cấu hình Port Forwarding (Nếu chạy ở nhà)
+
+Nếu server của bạn có IP cục bộ (VD: `192.168.1.99`), bạn cần mở port trên Modem/Router để người ngoài truy cập được.
+
+**Các Port cần mở (Forward 1-1):**
+*   **TCP 4000**: Cho người dùng truy cập web (Destination IP: `192.168.1.99`).
+*   **TCP 3000**: Cho API (Destination IP: `192.168.1.99`).
+*   **TCP 25**: Để nhận email từ Gmail/Outlook.
+
+> ⚠️ **Lưu ý quan trọng về Port 25:**
+> Hầu hết các nhà mạng (ISP) chặn chiều **RA** và **VÀO** của port 25 đối với khách hàng cá nhân để chống spam.
+> *   Nếu bị chặn chiều VÀO: Bạn sẽ không nhận được thư.
+> *   Nếu bị chặn chiều RA: Bạn sẽ không gửi được thư ra ngoài (Gmail, Yahoo...).
+> *   Giải pháp: Check [Open Port Check Tool](https://www.yougetsignal.com/tools/open-ports/) xem port 25 có thông không.
 
 ---
 Chúc bạn thành công! 🚀

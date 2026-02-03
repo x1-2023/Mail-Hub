@@ -1,0 +1,12 @@
+docker run -d \
+  --name mail_db \
+  -p 5432:5432 \
+  -e POSTGRES_USER='mailuser' \
+  -e POSTGRES_PASSWORD='Quang##2022!' \
+  -e POSTGRES_DB='maildb' \
+  -v /opt/mail-data/pgdata:/var/lib/postgresql/data \
+  --restart unless-stopped \
+  postgres:15-alpine
+
+
+

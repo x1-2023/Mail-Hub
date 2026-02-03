@@ -154,6 +154,23 @@ func main() {
 	messages.Delete("/:id", mailHandler.DeleteMessage)
 	messages.Put("/:id/star", mailHandler.StarMessage)
 
+	// ---------------------------------------------------------
+	// Static File Serving (SPA Support for All-in-One Docker)
+	// ---------------------------------------------------------
+	if _, err := os.Stat("./public"); err == nil {
+		log.Println("Serving static files from ./public")
+		app.Static("/", "./public")
+
+		// SPA Fallback: Any 404 on non-API routes -> index.html
+		app.Use(func(c *fiber.Ctx) error {
+			// Skip API routes (let them 404 normally if not found)
+			if c.Path()[:4] == "/api" {
+				return c.Next()
+			}
+			return c.SendFile("./public/index.html")
+		})
+	}
+
 	// 5. Start Server
 	port := os.Getenv("PORT")
 	if port == "" {

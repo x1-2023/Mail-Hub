@@ -69,8 +69,47 @@ func HandleEmailTask(ctx context.Context, t *asynq.Task) error {
 		First(&alias).Error
 
 	if err != nil {
-		// Alias not found (maybe deleted between SMTP check and Worker)
-		return nil
+		// Phase 8: Legacy Adoption (Orphan Catch-all)
+		// If enabled, auto-create anonymous alias for valid domains
+		allowAdoption := services.Settings.GetString("allow_legacy_adoption", "false") == "true"
+
+		if !allowAdoption {
+			log.Printf("[Worker] Orphan email dropped for %s (Adoption Disabled)", payload.Rcpt)
+			return nil
+		}
+
+		// Verify Domain exists in our system
+		var domain models.Domain
+		if err := database.DB.Where("domain = ?", rcptParts[1]).First(&domain).Error; err != nil {
+			log.Printf("[Worker] Orphan email dropped for %s (Domain not found)", payload.Rcpt)
+			return nil
+		}
+
+		// Create Adoption Alias
+		log.Printf("[Worker] Adopting orphan email for %s...", payload.Rcpt)
+
+		ttlHours := services.Settings.GetInt("anon_retention_hours", 24)
+		now := time.Now()
+		exp := now.Add(time.Duration(ttlHours) * time.Hour)
+
+		alias = models.Alias{
+			Base: models.Base{
+				ID: uuid.New().String(),
+			},
+			LocalPart: rcptParts[0],
+			DomainID:  domain.ID,
+			IsActive:  true,
+			OwnerType: "anonymous",
+			ExpiresAt: &exp,
+		}
+
+		// Save new alias
+		if err := database.DB.Create(&alias).Error; err != nil {
+			log.Printf("[Worker] Failed to create adoption alias: %v", err)
+			return err
+		}
+
+		// Continue to process email using this new alias...
 	}
 
 	// 3. Save Email Metadata

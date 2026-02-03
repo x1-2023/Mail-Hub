@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------
+  # MailHub (All-in-One: Frontend + Backend + Worker)
+  # ----------------------------------------------------
+  mailhub:
+    build:
+      context: .
+      dockerfile: Dockerfile.aio
+    container_name: mailhub_aio
+    restart: always
+    network_mode: "host" # Use Host Network for simplicity (Port 80/25 binding)
+    env_file:
+      - .env
+    environment:
+      # Application Configuration
+      - PORT=80         # Web Server Port (Backend serves Frontend here)
+      - SMTP_PORT=25    # SMTP Port (Listen directly on 25)
+      - VITE_API_URL=/api # Frontend connects to same host
+      
+      # Database Connection (Adjust .env accordingly)
+      - DB_HOST=localhost
+      - REDIS_ADDR=localhost:6379 
+    volumes:
+      # Persist SQLite data if used (optional)
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - db
+
+  # ----------------------------------------------------
+  # Dependencies
+  # ----------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: mailhub_redis
+    restart: always
+    network_mode: "host" # Share host network
+    volumes:
+      - redis_data:/data
+
+  db:
+    image: postgres:15-alpine
+    container_name: mailhub_postgres
+    restart: always
+    network_mode: "host" # Share host network
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-mailhub}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  postgres_data:

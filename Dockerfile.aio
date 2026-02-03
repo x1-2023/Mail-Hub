@@ -1,0 +1,76 @@
+# ----------------------------------
+# Stage 1: Build Frontend (Node.js)
+# ----------------------------------
+FROM node:20-alpine AS frontend_builder
+
+WORKDIR /app
+COPY web/package.json web/package-lock.json ./
+RUN npm install
+
+COPY web/ ./
+# Set API URL to relative path (since it's same domain now)
+ENV VITE_API_URL=/api
+RUN npm run build
+
+# ----------------------------------
+# Stage 2: Build Backend (Go)
+# ----------------------------------
+FROM golang:1.24-alpine AS backend_builder
+
+# Install build dependencies (gcc for SQLite/CGO)
+RUN apk add --no-cache gcc musl-dev
+
+WORKDIR /app
+
+# Copy Go mod files and download deps
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy Source Code
+COPY . .
+
+# Build Binaries (API, SMTP, Worker, Migration Tools)
+# Using CGO_ENABLED=1 because we use modernc.org/sqlite (pure go) BUT some mail libs might need it? 
+# actually modernc is pure go. But let's keep it standard.
+# NOTE: User is on SQLite/Postgres. We build for generic Linux.
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o smtp_server ./cmd/smtp/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o worker ./cmd/worker/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o create_admin ./cmd/create_admin/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o migrate_owner ./cmd/migrate_owner/main.go
+
+# ----------------------------------
+# Stage 3: Final Image (Alpine)
+# ----------------------------------
+FROM alpine:latest
+
+WORKDIR /app
+
+# Install runtime dependencies (ca-certificates for HTTPS)
+RUN apk add --no-cache ca-certificates tzdata
+
+# Copy Backend Binaries
+COPY --from=backend_builder /app/main .
+COPY --from=backend_builder /app/smtp_server .
+COPY --from=backend_builder /app/worker .
+COPY --from=backend_builder /app/create_admin .
+COPY --from=backend_builder /app/migrate_owner .
+
+# Copy Frontend Build to ./public
+COPY --from=frontend_builder /app/dist ./public
+
+# Copy Entrypoint
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# Expose Ports
+# 8080 = Web/API
+# 2525 = SMTP
+EXPOSE 8080 2525
+
+# Environment Defaults
+ENV PORT=8080
+ENV SMTP_PORT=2525
+
+# Run Entrypoint (reused from previous phase)
+CMD ["./entrypoint.sh"]
