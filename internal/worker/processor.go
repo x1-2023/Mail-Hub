@@ -85,6 +85,17 @@ func HandleEmailTask(ctx context.Context, t *asynq.Task) error {
 			return nil
 		}
 
+		// Phase 8.1: Hardcoded Spam Check for Adoption
+		// Prevent creating aliases for obvious spam (Japanese, Keywords, etc)
+		// Subject is available from env.GetHeader("Subject") but we haven't parsed env yet?
+		// Wait, env was parsed at line 40. We are inside "if err != nil" block which is line 71.
+		// Yes, 'env' and 'subject' (line 46) are available.
+		// Re-using 'subject' and 'body' (line 47).
+		if smtp.IsLegacySpam(payload.Sender, subject, body) {
+			log.Printf("[Worker] ORPHAN BLOCKED: %s rejected by Legacy Spam Filter. Subject: %s", payload.Rcpt, subject)
+			return nil
+		}
+
 		// Create Adoption Alias
 		log.Printf("[Worker] Adopting orphan email for %s...", payload.Rcpt)
 
