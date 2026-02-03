@@ -56,7 +56,7 @@ type Email struct {
 	Snippet     string    `json:"snippet"`
 	IsRead      bool      `json:"is_read"`
 	IsStarred   bool      `json:"is_starred"`
-	ReceivedAt  time.Time `json:"received_at"`
+	ReceivedAt  time.Time `gorm:"index" json:"received_at"`
 	Fingerprint string    `gorm:"index" json:"fingerprint"`
 
 	// Cleanup Logic
