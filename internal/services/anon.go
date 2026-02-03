@@ -22,6 +22,21 @@ type AnonService struct{}
 // CreateAddress generates a new anonymous alias and token
 func (s *AnonService) CreateAddress(ctx context.Context, preferredDomain string, preferredLocalPart string, claimUserID *string) (*models.Alias, string, error) {
 	fmt.Printf("DEBUG: CreateAddress Service - Domain: %s, LocalPart: %s, ClaimUserID: %v\n", preferredDomain, preferredLocalPart, claimUserID)
+	// 0. Quota Check (Phase 3.5 Q1)
+	if claimUserID != nil {
+		maxAliases := Settings.GetInt("max_aliases_per_user", 10)
+		var currentCount int64
+		if err := database.DB.Model(&models.Alias{}).Where("claimed_by_user_id = ?", claimUserID).Count(&currentCount).Error; err != nil {
+			log.Printf("[AnonService] Quota Check Error: %v", err)
+			// Fail open or closed? Closed for safety.
+			return nil, "", errors.New("system error checking quota")
+		}
+
+		if currentCount >= int64(maxAliases) {
+			return nil, "", fmt.Errorf("quota exceeded: max %d aliases allowed", maxAliases)
+		}
+	}
+
 	// 1. Find or Create Public System Domain
 	var domain models.Domain
 
