@@ -58,7 +58,8 @@ func (s *AnonService) CreateAddress(ctx context.Context, preferredDomain string,
 			// Auto-seed for V1 prototype convenience
 			defaultDomain := os.Getenv("DOMAIN")
 			if defaultDomain == "" {
-				defaultDomain = "hotmailv.com"
+				log.Println("[AnonService] DOMAIN env is not set, cannot create default domain")
+				return nil, "", errors.New("DOMAIN environment variable is required")
 			}
 			domain = models.Domain{
 				Domain:   defaultDomain,

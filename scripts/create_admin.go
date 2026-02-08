@@ -49,15 +49,19 @@ func main() {
 	}
 
 	// 5. Ensure System Domain Exists
+	systemDomain := os.Getenv("DOMAIN")
+	if systemDomain == "" {
+		log.Fatal("DOMAIN env is required")
+	}
 	var domainCount int64
-	database.DB.Model(&models.Domain{}).Where("domain = ?", "hotmailv.com").Count(&domainCount)
+	database.DB.Model(&models.Domain{}).Where("domain = ?", systemDomain).Count(&domainCount)
 	if domainCount == 0 {
 		sysDomain := models.Domain{
-			Domain:   "hotmailv.com",
+			Domain:   systemDomain,
 			IsPublic: true,
 		}
 		database.DB.Create(&sysDomain)
-		fmt.Println("✅ System Domain 'hotmailv.com' created.")
+		fmt.Printf("✅ System Domain '%s' created.\n", systemDomain)
 	}
 
 	fmt.Println("🎉 Database Seeded Successfully.")
