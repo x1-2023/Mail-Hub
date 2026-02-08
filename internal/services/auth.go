@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -112,7 +113,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (s
 	// Generate Token (SSO-compatible claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":           user.ID,
-		"role":          user.Role,
+		"role":          strings.ToLower(user.Role),
 		"email":         user.Email,
 		"iss":           "0xf5-ecosystem",
 		"aud":           []string{"mail", "shop"},
