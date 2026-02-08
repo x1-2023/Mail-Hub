@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"mailhub/internal/models"
 	"mailhub/internal/services"
 	"mailhub/internal/utils"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type SSOHandler struct{}
@@ -56,13 +58,33 @@ func (h *SSOHandler) Verify(c *fiber.Ctx) error {
 		})
 	}
 
-	// Verify user exists and check token_version
+	// Verify user exists - auto-create if from Shop SSO
 	var user models.User
 	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"valid": false,
-			"error": "User not found",
-		})
+		if err != gorm.ErrRecordNotFound {
+			return utils.Error(c, "Database error", 500)
+		}
+
+		// Auto-create user from Shop SSO token
+		email, _ := claims["email"].(string)
+		if email == "" {
+			return c.Status(401).JSON(fiber.Map{
+				"valid": false,
+				"error": "Token missing email claim",
+			})
+		}
+
+		user = models.User{
+			Base:   models.Base{ID: userID},
+			Email:  email,
+			Role:   "USER",
+			Status: "ACTIVE",
+		}
+		if err := database.DB.Create(&user).Error; err != nil {
+			log.Printf("SSO auto-create user failed: %v", err)
+			return utils.Error(c, "Failed to sync user", 500)
+		}
+		log.Printf("SSO: Auto-created user %s (%s) from Shop token", userID, email)
 	}
 
 	// Check if user is banned
@@ -135,12 +157,30 @@ func (h *SSOHandler) Me(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get fresh user data
+	// Get fresh user data - auto-create if from Shop SSO
 	var user models.User
 	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return c.Status(401).JSON(fiber.Map{
-			"authenticated": false,
-		})
+		if err != gorm.ErrRecordNotFound {
+			return c.Status(500).JSON(fiber.Map{"authenticated": false})
+		}
+
+		// Auto-create user from Shop SSO token
+		email, _ := claims["email"].(string)
+		if email == "" {
+			return c.Status(401).JSON(fiber.Map{"authenticated": false})
+		}
+
+		user = models.User{
+			Base:   models.Base{ID: userID},
+			Email:  email,
+			Role:   "USER",
+			Status: "ACTIVE",
+		}
+		if err := database.DB.Create(&user).Error; err != nil {
+			log.Printf("SSO auto-create user failed: %v", err)
+			return c.Status(500).JSON(fiber.Map{"authenticated": false})
+		}
+		log.Printf("SSO: Auto-created user %s (%s) from Shop token", userID, email)
 	}
 
 	if user.Status == "BANNED" {

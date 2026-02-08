@@ -1,7 +1,7 @@
 # 🚀 Proxmox CT - Deploy Shop + AWF-MAIL
 
 > **CT Apps IP**: `192.168.1.100`  
-> **CT Database IP**: thay `192.168.1.99` bên dưới bằng IP thực của CT database
+> **CT Database IP**: `192.168.1.99`
 
 ---
 
@@ -19,7 +19,7 @@ wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
 tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
 echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
 source /etc/profile
-go version
+
 
 # Cài PM2
 npm install -g pm2
@@ -30,12 +30,11 @@ mkdir -p /opt/apps
 
 ---
 
-## 2. Gen SSO Secret (1 lần duy nhất)
+## 2. SSO Secret (đã gen sẵn)
 
-```bash
-SSO_SECRET=$(openssl rand -hex 32)
-echo "SSO_JWT_SECRET=$SSO_SECRET"
-# GHI LẠI giá trị này, dùng cho CẢ 2 app
+```
+SSO_JWT_SECRET=d0fd4e767fd5179073be6101e0c4ad76dc4819f33566ba832bf1acfcefe55f71
+# Giá trị này GIỐNG NHAU ở cả 2 app
 ```
 
 ---
@@ -56,10 +55,10 @@ npm install
 ```bash
 cat > .env << 'ENVEOF'
 # Database
-DATABASE_URL="postgresql://shopuser:Quang##2022@CT_DB_IP:5432/shop_db"
+DATABASE_URL="postgresql://shopuser:Quang%23%232022@192.168.1.99:5432/shop_db"
 
 # SSO (PHẢI GIỐNG AWF-MAIL)
-SSO_JWT_SECRET="DÁN_SECRET_TỪ_BƯỚC_2"
+SSO_JWT_SECRET="d0fd4e767fd5179073be6101e0c4ad76dc4819f33566ba832bf1acfcefe55f71"
 
 # Session
 SESSION_SECRET="f054867c96825d1cd20cf7dbf8c6448a213d2c24c37ccad25fc5158439f406a9"
@@ -68,7 +67,12 @@ SESSION_SECRET="f054867c96825d1cd20cf7dbf8c6448a213d2c24c37ccad25fc5158439f406a9
 APP_URL="https://webmmo.net"
 NEXT_PUBLIC_APP_URL="https://webmmo.net"
 
-# Email
+# Branding
+NEXT_PUBLIC_SITE_NAME="WebMMO"
+NEXT_PUBLIC_SUPPORT_EMAIL="support@webmmo.net"
+NEXT_PUBLIC_TELEGRAM_HANDLE="@ADTVC"
+
+# Email (Resend)
 RESEND_API_KEY="re_HDVXiJ4s_3ey96UScxPgAqDeQeNrQu85Q"
 RESEND_FROM_EMAIL="no-reply@webmmo.net"
 
@@ -81,7 +85,7 @@ PORT=5000
 ENVEOF
 ```
 
-> ⚠️ **SỬA LẠI**: `CT_DB_IP` và `SSO_JWT_SECRET` trước khi chạy!
+> ✅ **Sẵn sàng copy-paste!** Tất cả giá trị đã điền.
 
 ### 3.3. Setup Database & Build
 
@@ -102,7 +106,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 async function main() {
-  const hash = await bcrypt.hash('YOUR_ADMIN_PASSWORD', 12);
+  const hash = await bcrypt.hash('Deobiet1', 12);
   await prisma.user.upsert({
     where: { email: 'admin@webmmo.net' },
     update: {},
@@ -123,7 +127,7 @@ main().catch(console.error).finally(() => prisma.\$disconnect());
 ### 3.5. Start với PM2
 
 ```bash
-pm2 start npm --name "shop" -- start
+PORT=5000 pm2 start npm --name "shop" -- start
 pm2 save
 ```
 
@@ -171,23 +175,24 @@ PORT=8080
 
 # Security
 JWT_SECRET="Jb0t0S1mKzq8w2gq3x9b8fQ1d0z3Jv7yR8m1bqfGm2tqv0Lw6Wn9mG6gX0p5Qx8hXf3r0yG7dQ2m1vK8zQ9pA=="
-SSO_JWT_SECRET="DÁN_SECRET_TỪ_BƯỚC_2"
+SSO_JWT_SECRET="d0fd4e767fd5179073be6101e0c4ad76dc4819f33566ba832bf1acfcefe55f71"
 
 # Database
-DATABASE_URL="host=CT_DB_IP user=mailuser password=Quang##2022 dbname=maildb port=5432 sslmode=disable TimeZone=Asia/Ho_Chi_Minh"
+DATABASE_URL="host=192.168.1.99 user=mailuser password=Quang##2022 dbname=maildb port=5432 sslmode=disable TimeZone=Asia/Ho_Chi_Minh"
 
 # Redis
-REDIS_ADDR="CT_DB_IP:6379"
+REDIS_ADDR="192.168.1.99:6379"
+REDIS_PASSWORD="Deobiet1"
 
-# Domain
+# Domain (mail domain mặc định khi seed)
 DOMAIN=hotmailv.com
 
-# Frontend (không cần khi serve từ ./public)
-VITE_API_URL=https://api.hotmailv.com/api
+# Frontend
+VITE_API_URL=https://mailhub.webmmo.net/api
 ENVEOF
 ```
 
-> ⚠️ **SỬA LẠI**: `CT_DB_IP` và `SSO_JWT_SECRET` (phải GIỐNG Shop)!
+> ✅ **Sẵn sàng copy-paste!** Tất cả giá trị đã điền.
 
 ### 4.4. Start với PM2
 
@@ -254,10 +259,10 @@ server {
     client_max_body_size 50M;
 }
 
-# AWF-MAIL API - api.hotmailv.com
+# AWF-MAIL API - mailhub.webmmo.net
 server {
     listen 80;
-    server_name api.hotmailv.com;
+    server_name mailhub.webmmo.net;
 
     location / {
         proxy_pass http://127.0.0.1:8080;
@@ -298,7 +303,7 @@ nginx -t && systemctl restart nginx
 ```bash
 apt install -y certbot python3-certbot-nginx
 certbot --nginx -d webmmo.net -d www.webmmo.net
-certbot --nginx -d api.hotmailv.com
+certbot --nginx -d mailhub.webmmo.net
 # Certbot tự cấu hình SSL + auto-renew
 ```
 
@@ -349,7 +354,7 @@ pm2 restart all
 | App | Port | PM2 Name | Domain |
 |-----|------|----------|--------|
 | Shop | 5000 | `shop` | webmmo.net |
-| AWF-MAIL API | 8080 | `mailhub-api` | api.hotmailv.com |
+| AWF-MAIL API | 8080 | `mailhub-api` | mailhub.webmmo.net |
 
 | ENV Variable | Giá trị | Lưu ý |
 |-------------|---------|-------|
