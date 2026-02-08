@@ -127,5 +127,6 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (s
 		return "", nil, err
 	}
 
+	user.Role = strings.ToLower(user.Role)
 	return t, &user, nil
 }
