@@ -34,6 +34,8 @@ func main() {
 		&models.Alias{},
 		&models.Email{},
 		&models.EmailContent{},
+		&models.SpamFilter{},
+		&models.AuditLog{},
 		&models.SystemSetting{},
 		&models.Notification{},
 		&models.SystemLog{},
