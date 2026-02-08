@@ -74,6 +74,12 @@ func main() {
 	auth.Post("/register", middleware.LimitStrict(), authHandler.Register)
 	auth.Post("/login", middleware.LimitStrict(), authHandler.Login)
 
+	// SSO Routes (public - for cross-service token verification)
+	ssoHandler := handlers.NewSSOHandler()
+	sso := api.Group("/sso")
+	sso.Post("/verify", ssoHandler.Verify)
+	sso.Get("/me", ssoHandler.Me)
+
 	// Anon Routes
 	anonHandler := handlers.NewAnonHandler()
 	mailHandler := handlers.NewMailHandler()

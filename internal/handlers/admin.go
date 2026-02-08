@@ -47,7 +47,7 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 	if err := database.DB.First(&user, "id = ?", id).Error; err != nil {
 		return utils.Error(c, "User not found", 404)
 	}
-	if user.Role == "owner" {
+	if user.Role == "OWNER" {
 		return utils.Error(c, "Cannot delete owner", 403)
 	}
 
@@ -60,15 +60,15 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 func (h *AdminHandler) ChangeUserRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req struct {
-		Role string `json:"role"` // "user", "admin"
+		Role string `json:"role"` // "USER", "ADMIN"
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return utils.Error(c, "Invalid request", 400)
 	}
 
-	// Validate role
-	if req.Role != "user" && req.Role != "admin" {
-		return utils.Error(c, "Role must be 'user' or 'admin'", 400)
+	// Validate role (SSO: uppercase roles)
+	if req.Role != "USER" && req.Role != "ADMIN" {
+		return utils.Error(c, "Role must be 'USER' or 'ADMIN'", 400)
 	}
 
 	// Check if target is owner (can't change owner's role)
@@ -76,7 +76,7 @@ func (h *AdminHandler) ChangeUserRole(c *fiber.Ctx) error {
 	if err := database.DB.First(&user, "id = ?", id).Error; err != nil {
 		return utils.Error(c, "User not found", 404)
 	}
-	if user.Role == "owner" {
+	if user.Role == "OWNER" {
 		return utils.Error(c, "Cannot change owner's role", 403)
 	}
 

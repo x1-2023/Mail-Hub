@@ -26,7 +26,11 @@ func init() {
 }
 
 func LoadJwtSecret() {
-	secret := os.Getenv("JWT_SECRET")
+	// SSO: Prefer SSO_JWT_SECRET for ecosystem-wide auth
+	secret := os.Getenv("SSO_JWT_SECRET")
+	if secret == "" {
+		secret = os.Getenv("JWT_SECRET")
+	}
 	if secret == "" {
 		JwtSecret = []byte("default_secret_please_change")
 	} else {
@@ -63,7 +67,7 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 	}
 
 	if role == "" {
-		role = "user"
+		role = "USER"
 	}
 
 	user := &models.User{
@@ -105,11 +109,16 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (s
 		return "", nil, errors.New("invalid credentials")
 	}
 
-	// Generate Token
+	// Generate Token (SSO-compatible claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  user.ID,
-		"role": user.Role,
-		"exp":  time.Now().Add(7 * 24 * time.Hour).Unix(),
+		"sub":           user.ID,
+		"role":          user.Role,
+		"email":         user.Email,
+		"iss":           "0xf5-ecosystem",
+		"aud":           []string{"mail", "shop"},
+		"token_version": user.TokenVersion,
+		"iat":           time.Now().Unix(),
+		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
 
 	t, err := token.SignedString(JwtSecret)

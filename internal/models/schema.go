@@ -16,9 +16,11 @@ type Base struct {
 type User struct {
 	Base
 	Email        string  `gorm:"uniqueIndex" json:"email"`
-	Username     *string `gorm:"uniqueIndex" json:"username,omitempty"` // Added for migration
-	PasswordHash string  `json:"-"`
-	Role         string  `json:"role"` // "user", "admin"
+	Username     *string `gorm:"uniqueIndex" json:"username,omitempty"`
+	PasswordHash string  `gorm:"column:password_hash" json:"-"`  // SSO: mapped to password_hash column
+	Role         string  `json:"role"`                           // SSO: "OWNER", "ADMIN", "USER"
+	TokenVersion int     `gorm:"default:0" json:"token_version"` // SSO: increment to revoke all tokens
+	Status       string  `gorm:"default:ACTIVE" json:"status"`   // SSO: "ACTIVE", "BANNED"
 	APIKey       *string `gorm:"uniqueIndex" json:"api_key"`
 
 	Aliases []Alias `json:"aliases,omitempty"`

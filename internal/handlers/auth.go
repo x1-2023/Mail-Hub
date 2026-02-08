@@ -32,8 +32,8 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return utils.Error(c, "Email and password required", 400)
 	}
 
-	// Public registration: No username, Role "user"
-	user, err := h.Service.Register(c.Context(), req.Email, "", req.Password, "user")
+	// Public registration: No username, Role "USER" (SSO standard)
+	user, err := h.Service.Register(c.Context(), req.Email, "", req.Password, "USER")
 	if err != nil {
 		return utils.Error(c, err.Error(), 400)
 	}

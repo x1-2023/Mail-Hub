@@ -77,7 +77,7 @@ func ImportUsersFromSqlite(dbPath string) (*ImportStats, error) {
 		}
 
 		// Handle Role
-		roleStr := "user"
+		roleStr := "USER"
 		if role.Valid && role.String != "" {
 			roleStr = role.String
 		}

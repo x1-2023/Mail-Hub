@@ -13,6 +13,31 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// SSO: Validate JWT has correct audience claim for Mail service
+func validateSSOClaims(claims jwt.MapClaims) bool {
+	// Check audience - must include "mail"
+	audClaim, exists := claims["aud"]
+	if !exists {
+		// Legacy tokens without aud claim are allowed during migration
+		return true
+	}
+
+	switch aud := audClaim.(type) {
+	case []interface{}:
+		for _, a := range aud {
+			if str, ok := a.(string); ok && str == "mail" {
+				return true
+			}
+		}
+	case string:
+		if aud == "mail" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Helper to validate API Key
 func validateAPIKey(c *fiber.Ctx) (*models.User, error) {
 	apiKey := c.Get("X-Api-Key")
@@ -167,7 +192,8 @@ func AdminProtected() fiber.Handler {
 		if apiKeyUser, err := validateAPIKey(c); err != nil {
 			return utils.Error(c, "Invalid API Key", 401)
 		} else if apiKeyUser != nil {
-			if apiKeyUser.Role != "admin" && apiKeyUser.Role != "owner" {
+			// SSO: Compare with uppercase roles
+			if apiKeyUser.Role != "ADMIN" && apiKeyUser.Role != "OWNER" {
 				return utils.Error(c, "Admin Access Required", 403)
 			}
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -200,12 +226,16 @@ func AdminProtected() fiber.Handler {
 			return utils.Error(c, "Invalid Token Claims", 401)
 		}
 
+		// SSO: Validate audience claim
+		if !validateSSOClaims(claims) {
+			return utils.Error(c, "Token not authorized for Mail service", 403)
+		}
+
 		role, ok := claims["role"].(string)
 
-		// Allow both "admin" and "owner" roles
-		// DEBUG: Expose Role in error message for debugging
-		if !ok || (role != "admin" && role != "owner") {
-			return utils.Error(c, fmt.Sprintf("Admin Access Required. Role: '%s', ClaimType: %T", role, claims["role"]), 403)
+		// SSO: Accept uppercase ADMIN/OWNER roles
+		if !ok || (role != "ADMIN" && role != "OWNER") {
+			return utils.Error(c, fmt.Sprintf("Admin Access Required. Role: '%s'", role), 403)
 		}
 
 		c.Locals("user", token)
@@ -213,14 +243,15 @@ func AdminProtected() fiber.Handler {
 	}
 }
 
-// OwnerProtected allows only owner role (for Settings and other owner-only features)
+// OwnerProtected allows only OWNER role (for Settings and other owner-only features)
 func OwnerProtected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// 1. Check API Key
 		if apiKeyUser, err := validateAPIKey(c); err != nil {
 			return utils.Error(c, "Invalid API Key", 401)
 		} else if apiKeyUser != nil {
-			if apiKeyUser.Role != "owner" {
+			// SSO: Compare with uppercase OWNER
+			if apiKeyUser.Role != "OWNER" {
 				return utils.Error(c, "Owner Access Required", 403)
 			}
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -250,8 +281,14 @@ func OwnerProtected() fiber.Handler {
 			return utils.Error(c, "Invalid Token Claims", 401)
 		}
 
+		// SSO: Validate audience claim
+		if !validateSSOClaims(claims) {
+			return utils.Error(c, "Token not authorized for Mail service", 403)
+		}
+
 		role, ok := claims["role"].(string)
-		if !ok || role != "owner" {
+		// SSO: Accept uppercase OWNER only
+		if !ok || role != "OWNER" {
 			return utils.Error(c, fmt.Sprintf("Owner Access Required. Role: '%s'", role), 403)
 		}
 
