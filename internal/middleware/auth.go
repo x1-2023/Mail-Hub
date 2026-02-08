@@ -233,8 +233,9 @@ func AdminProtected() fiber.Handler {
 
 		role, ok := claims["role"].(string)
 
-		// SSO: Accept uppercase ADMIN/OWNER roles
-		if !ok || (role != "ADMIN" && role != "OWNER") {
+		// SSO: Accept both uppercase and lowercase ADMIN/OWNER roles
+		normalizedRole := strings.ToUpper(role)
+		if !ok || (normalizedRole != "ADMIN" && normalizedRole != "OWNER") {
 			return utils.Error(c, fmt.Sprintf("Admin Access Required. Role: '%s'", role), 403)
 		}
 
@@ -287,8 +288,8 @@ func OwnerProtected() fiber.Handler {
 		}
 
 		role, ok := claims["role"].(string)
-		// SSO: Accept uppercase OWNER only
-		if !ok || role != "OWNER" {
+		// SSO: Accept both uppercase and lowercase OWNER
+		if !ok || strings.ToUpper(role) != "OWNER" {
 			return utils.Error(c, fmt.Sprintf("Owner Access Required. Role: '%s'", role), 403)
 		}
 
