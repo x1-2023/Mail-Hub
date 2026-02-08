@@ -29,10 +29,11 @@ func main() {
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
 	}
+	redisPassword := os.Getenv("REDIS_PASSWORD")
 
 	// 4. Setup Asynq Server (to process tasks)
 	srv := asynq.NewServer(
-		asynq.RedisClientOpt{Addr: redisAddr},
+		asynq.RedisClientOpt{Addr: redisAddr, Password: redisPassword},
 		asynq.Config{
 			Concurrency: 5,
 			Queues: map[string]int{
@@ -49,7 +50,7 @@ func main() {
 
 	// 5. Setup Scheduler (to enqueue periodic tasks)
 	scheduler := asynq.NewScheduler(
-		asynq.RedisClientOpt{Addr: redisAddr},
+		asynq.RedisClientOpt{Addr: redisAddr, Password: redisPassword},
 		&asynq.SchedulerOpts{
 			Location: time.UTC,
 		},

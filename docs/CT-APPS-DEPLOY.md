@@ -185,7 +185,7 @@ REDIS_ADDR="192.168.1.99:6379"
 REDIS_PASSWORD="Deobiet1"
 
 # Domain (mail domain mặc định khi seed)
-DOMAIN=hotmailv.com
+DOMAIN=webmmo.net
 
 # Frontend
 VITE_API_URL=https://mailhub.webmmo.net/api
