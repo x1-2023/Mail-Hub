@@ -74,12 +74,12 @@ const AdminsTab = () => {
 
   const handlePromote = () => {
     if (!selectedUserId) return;
-    changeRoleMutation.mutate({ userId: selectedUserId, role: "admin" });
+    changeRoleMutation.mutate({ userId: selectedUserId, role: "ADMIN" });
   };
 
   const handleDemote = (userId: string, email: string) => {
     if (confirm(`Demote "${email}" from admin to user?`)) {
-      changeRoleMutation.mutate({ userId, role: "user" });
+      changeRoleMutation.mutate({ userId, role: "USER" });
     }
   };
 

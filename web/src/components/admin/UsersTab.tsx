@@ -23,7 +23,7 @@ const UsersTab = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ username: "", email: "", password: "", role: "user" });
+  const [newUser, setNewUser] = useState({ username: "", email: "", password: "", role: "USER" });
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -48,7 +48,7 @@ const UsersTab = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User created successfully!");
       setCreateDialogOpen(false);
-      setNewUser({ username: "", email: "", password: "", role: "user" });
+      setNewUser({ username: "", email: "", password: "", role: "USER" });
     },
     onError: (err: any) => toast.error(err?.response?.data?.error || "Failed to create user")
   });
@@ -171,8 +171,8 @@ const UsersTab = () => {
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                     className="col-span-3 h-10 px-3 border-2 border-border rounded-md"
                   >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                    <option value="USER">User</option>
+                    <option value="ADMIN">Admin</option>
                   </select>
                 </div>
               </div>
