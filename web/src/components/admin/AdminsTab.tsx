@@ -57,9 +57,13 @@ const AdminsTab = () => {
   });
 
   // Filter admins and owner
-  // Filter admins and owner (case-insensitive)
-  const admins = users?.filter((u: any) => u.role.toLowerCase() === "admin" || u.role.toLowerCase() === "owner") || [];
-  const regularUsers = users?.filter((u: any) => u.role.toLowerCase() === "user") || [];
+  // Filter admins and owner (case-insensitive) - Added safe navigation
+  const admins = users?.filter((u: any) => u.role?.toLowerCase() === "admin" || u.role?.toLowerCase() === "owner") || [];
+  const regularUsers = users?.filter((u: any) => u.role?.toLowerCase() === "user") || [];
+
+  // Debug logs
+  console.log("All Users:", users);
+  console.log("Regular Users (Filtered):", regularUsers);
 
   // Pagination for admins
   const totalPages = Math.ceil(admins.length / ITEMS_PER_PAGE);
@@ -262,7 +266,7 @@ const AdminsTab = () => {
               <Label className="font-bold uppercase text-sm">Select User</Label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="brutalist-input">
-                  <SelectValue placeholder="Choose a user to promote..." />
+                  <SelectValue placeholder="Choose a user (v2 fix)..." />
                 </SelectTrigger>
                 <SelectContent>
                   {regularUsers.map((user: any) => (
