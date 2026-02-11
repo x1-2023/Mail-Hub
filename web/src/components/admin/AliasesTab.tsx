@@ -232,13 +232,13 @@ const AliasesTab = () => {
                                         </td>
                                         <td className="p-4">
                                             <Badge
-                                                variant={alias.owner_type === "user" ? "default" : "secondary"}
-                                                className={`uppercase font-bold ${alias.owner_type === "user"
+                                                variant={alias.owner_type?.toLowerCase() === "user" ? "default" : "secondary"}
+                                                className={`uppercase font-bold ${alias.owner_type?.toLowerCase() === "user"
                                                     ? "bg-lime-neon text-black border-2 border-black"
                                                     : "bg-muted"
                                                     }`}
                                             >
-                                                {alias.owner_type === "user" ? "👤 User" : "🌐 Anon"}
+                                                {alias.owner_type?.toLowerCase() === "user" ? "👤 User" : "🌐 Anon"}
                                             </Badge>
                                         </td>
                                         <td className="p-4 text-center">

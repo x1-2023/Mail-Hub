@@ -57,8 +57,9 @@ const AdminsTab = () => {
   });
 
   // Filter admins and owner
-  const admins = users?.filter((u: any) => u.role === "admin" || u.role === "owner") || [];
-  const regularUsers = users?.filter((u: any) => u.role === "user") || [];
+  // Filter admins and owner (case-insensitive)
+  const admins = users?.filter((u: any) => u.role.toLowerCase() === "admin" || u.role.toLowerCase() === "owner") || [];
+  const regularUsers = users?.filter((u: any) => u.role.toLowerCase() === "user") || [];
 
   // Pagination for admins
   const totalPages = Math.ceil(admins.length / ITEMS_PER_PAGE);
@@ -111,7 +112,7 @@ const AdminsTab = () => {
             </div>
             <div>
               <div className="text-2xl font-black">
-                {users?.filter((u: any) => u.role === "owner").length || 0}
+                {users?.filter((u: any) => u.role.toLowerCase() === "owner").length || 0}
               </div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Owner</div>
             </div>
@@ -124,7 +125,7 @@ const AdminsTab = () => {
             </div>
             <div>
               <div className="text-2xl font-black">
-                {users?.filter((u: any) => u.role === "admin").length || 0}
+                {users?.filter((u: any) => u.role.toLowerCase() === "admin").length || 0}
               </div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Admins</div>
             </div>
@@ -171,9 +172,9 @@ const AdminsTab = () => {
                 >
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg border-2 border-border flex items-center justify-center font-black text-lg ${user.role === "owner" ? "bg-yellow-100" : "bg-destructive/20"
+                      <div className={`w-10 h-10 rounded-lg border-2 border-border flex items-center justify-center font-black text-lg ${user.role.toLowerCase() === "owner" ? "bg-yellow-100" : "bg-destructive/20"
                         }`}>
-                        {user.role === "owner" ? "👑" : "🛡️"}
+                        {user.role.toLowerCase() === "owner" ? "👑" : "🛡️"}
                       </div>
                       <div>
                         <div className="font-bold">{user.email}</div>
@@ -185,12 +186,12 @@ const AdminsTab = () => {
                   </td>
                   <td className="p-4">
                     <Badge
-                      className={`uppercase font-bold ${user.role === "owner"
-                          ? "bg-yellow-100 text-yellow-800 border-2 border-yellow-600"
-                          : "bg-destructive/20 text-destructive border-2 border-destructive"
+                      className={`uppercase font-bold ${user.role.toLowerCase() === "owner"
+                        ? "bg-yellow-100 text-yellow-800 border-2 border-yellow-600"
+                        : "bg-destructive/20 text-destructive border-2 border-destructive"
                         }`}
                     >
-                      {user.role === "owner" ? "👑 Owner" : "🛡️ Admin"}
+                      {user.role.toLowerCase() === "owner" ? "👑 Owner" : "🛡️ Admin"}
                     </Badge>
                   </td>
                   <td className="p-4 text-sm font-mono">
@@ -198,7 +199,7 @@ const AdminsTab = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
-                      {user.role === "admin" && (
+                      {user.role.toLowerCase() === "admin" && (
                         <button
                           onClick={() => handleDemote(user.id, user.email)}
                           className="p-2 border-2 border-border rounded-lg bg-white hover:bg-destructive/20 transition-all hover:translate-y-[-2px]"
@@ -207,7 +208,7 @@ const AdminsTab = () => {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
-                      {user.role === "owner" && (
+                      {user.role.toLowerCase() === "owner" && (
                         <span className="text-xs text-muted-foreground italic">Protected</span>
                       )}
                     </div>
