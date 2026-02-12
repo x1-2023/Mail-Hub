@@ -62,6 +62,12 @@ type SystemStats struct {
 	TrafficTrend []DailyCount       `json:"traffic_trend"`
 	SystemHealth SystemHealth       `json:"system_health"`
 	RecentLogs   []models.SystemLog `json:"recent_logs"`
+	TopAliases   []TopAlias         `json:"top_aliases"`
+}
+
+type TopAlias struct {
+	Email string `json:"email"`
+	Count int64  `json:"count"`
 }
 
 var startTime = time.Now()
@@ -120,6 +126,19 @@ func (s *AdminService) GetStats() (*SystemStats, error) {
 
 	// 3. Recent Logs
 	database.DB.Order("created_at desc").Limit(5).Find(&stats.RecentLogs)
+
+	// 4. Top Aliases (Most Active)
+	database.DB.Raw(`
+		SELECT 
+			CONCAT(a.local_part, '@', d.domain) as email,
+			COUNT(e.id) as count
+		FROM aliases a
+		JOIN domains d ON a.domain_id = d.id
+		JOIN emails e ON e.alias_id = a.id
+		GROUP BY a.id, a.local_part, d.domain
+		ORDER BY count DESC
+		LIMIT 5
+	`).Scan(&stats.TopAliases)
 
 	return &stats, nil
 }

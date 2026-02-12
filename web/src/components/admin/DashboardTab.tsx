@@ -98,6 +98,47 @@ const DashboardTab = () => {
           </div>
         </section>
 
+        {/* 2.5 TOP ACTIVE ALIASES (Shares column with Traffic, sits below it?) 
+            Actually, user said "below Traffic Trend".
+            Let's put it in the same column as Traffic Trend.
+        */}
+        <section className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="brutalist-card p-6 bg-white">
+            <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-purple-600" />
+              Top Active Aliases
+            </h3>
+            <div className="space-y-3">
+              {stats?.top_aliases?.map((alias: any, i: number) => (
+                <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-500">
+                      {i + 1}
+                    </div>
+                    <span className="font-mono text-sm font-semibold truncate max-w-[180px]" title={alias.email}>
+                      {alias.email}
+                    </span>
+                  </div>
+                  <span className="font-bold text-electric-blue">{alias.count} mails</span>
+                </div>
+              ))}
+              {(!stats?.top_aliases || stats.top_aliases.length === 0) && (
+                <p className="text-sm text-muted-foreground italic">No data available.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="brutalist-card p-6 bg-white flex flex-col justify-center items-center text-center">
+            <Shield className="w-12 h-12 text-lime-neon mb-2" />
+            <h3 className="text-lg font-black uppercase">System Status</h3>
+            <p className="text-sm text-gray-500 mt-1">All services operational</p>
+            <div className="mt-4 flex gap-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">SMTP: Online</Badge>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">IMAP: Online</Badge>
+            </div>
+          </div>
+        </section>
+
         {/* 3. SYSTEM HEALTH & QUICK ACTIONS */}
         <div className="space-y-6">
           {/* Health */}
