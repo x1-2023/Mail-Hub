@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import API from "@/lib/api";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 const DashboardTab = () => {
   const { data: stats, isLoading } = useQuery({
