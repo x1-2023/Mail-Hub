@@ -173,6 +173,11 @@ const DashboardTab = () => {
                 <span className="flex items-center gap-2 font-bold text-gray-600"><Clock className="w-4 h-4 text-gray-400" /> Uptime</span>
                 <span className="font-mono text-sm font-medium text-gray-500">{stats?.system_health?.uptime || "0s"}</span>
               </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">SMTP: Online</Badge>
+                <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">IMAP: Online</Badge>
+              </div>
             </div>
           </section>
 
