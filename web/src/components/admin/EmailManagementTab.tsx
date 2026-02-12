@@ -49,7 +49,7 @@ const EmailManagementTab = () => {
     return () => clearTimeout(timer);
   }, [aliasSearch]);
 
-  const limit = 7; // User requested limit 7
+  const limit = 10; // Updated to 10
 
   const { data: aliasesData, isLoading: aliasesLoading } = useQuery({
     queryKey: ["admin-email-aliases", page, debouncedSearch],
