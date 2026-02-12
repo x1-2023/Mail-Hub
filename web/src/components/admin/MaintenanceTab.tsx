@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, Terminal, Trash2, Settings, CheckSquare } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import API from "@/lib/api";
