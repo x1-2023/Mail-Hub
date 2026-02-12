@@ -133,8 +133,8 @@ func (s *AdminService) GetStats() (*SystemStats, error) {
 			CONCAT(a.local_part, '@', d.domain) as email,
 			COUNT(e.id) as count
 		FROM aliases a
-		JOIN domains d ON a.domain_id = d.id
-		JOIN emails e ON e.alias_id = a.id
+		JOIN domains d ON a.domain_id::text = d.id::text
+		JOIN emails e ON e.alias_id::text = a.id::text
 		GROUP BY a.id, a.local_part, d.domain
 		ORDER BY count DESC
 		LIMIT 5
