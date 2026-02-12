@@ -7,6 +7,7 @@ import (
 
 	"mailhub/internal/models"
 	"mailhub/internal/queue"
+	"mailhub/internal/services"
 	"mailhub/internal/utils"
 	"mailhub/pkg/database"
 )
@@ -164,5 +165,22 @@ func isValidRecipient(email string) bool {
 		utils.LogError("DB Error validating recipient: %v", err)
 		return false
 	}
-	return count > 0
+
+	if count > 0 {
+		return true
+	}
+
+	// Phase 8: Legacy Adoption (Orphan Catch-all)
+	// If enabled, accept email even if alias doesn't exist (Worker will create it)
+	if services.Settings.GetString("allow_legacy_adoption", "false") == "true" {
+		// Check if domain is valid in our system
+		var domainCount int64
+		database.DB.Model(&models.Domain{}).Where("domain = ?", domainName).Count(&domainCount)
+		if domainCount > 0 {
+			utils.LogInfo("Accepting orphan email for adoption: %s", email)
+			return true
+		}
+	}
+
+	return false
 }

@@ -7,6 +7,7 @@ import (
 
 	"mailhub/internal/models"
 	"mailhub/internal/queue"
+	"mailhub/internal/services"
 	"mailhub/internal/smtp"
 	"mailhub/internal/utils"
 	"mailhub/pkg/database"
@@ -24,6 +25,11 @@ func main() {
 	database.Connect()
 	// Auto migrate logs
 	database.DB.AutoMigrate(&models.SystemLog{})
+
+	// Init Services
+	services.InitSettingsService()
+	services.Settings.InitializeDefaults()
+
 	queue.Init()
 
 	port := os.Getenv("SMTP_PORT")
