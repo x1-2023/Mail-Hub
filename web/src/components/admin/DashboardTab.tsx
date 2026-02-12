@@ -60,9 +60,9 @@ const DashboardTab = () => {
         />
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 2. TRAFFIC CHART (Span 2 cols) */}
-        <section className="lg:col-span-2 brutalist-card p-6 bg-white min-h-[400px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 2. TRAFFIC CHART (Row 1, Col 1) */}
+        <section className="brutalist-card p-6 bg-white min-h-[400px] flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-black uppercase flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-electric-blue" />
@@ -70,7 +70,7 @@ const DashboardTab = () => {
             </h3>
           </div>
 
-          <div className="h-[300px] w-full">
+          <div className="flex-1 w-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats?.traffic_trend || []}>
                 <defs>
@@ -99,11 +99,47 @@ const DashboardTab = () => {
           </div>
         </section>
 
-        {/* 2.5 TOP ACTIVE ALIASES (Shares column with Traffic, sits below it?) 
-            Actually, user said "below Traffic Trend".
-            Let's put it in the same column as Traffic Trend.
-        */}
-        <section className="lg:col-span-2 brutalist-card p-6 bg-white">
+        {/* 3. SYSTEM HEALTH (Row 1, Col 2) */}
+        <section className="brutalist-card p-6 bg-white min-h-[400px] flex flex-col transition-transform hover:translate-y-[-4px]">
+          <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2 text-electric-blue">
+            <Server className="w-6 h-6" /> System Health
+          </h3>
+          <div className="space-y-6 flex-1 flex flex-col">
+            <div>
+              <div className="flex justify-between mb-2 text-sm font-bold text-gray-700">
+                <span>CPU Usage</span>
+                <span className="text-electric-blue font-black">{stats?.system_health?.cpu_usage?.toFixed(1) || 0}%</span>
+              </div>
+              <ProgressBar value={stats?.system_health?.cpu_usage || 0} color="bg-electric-blue" trackColor="bg-gray-100" />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2 text-sm font-bold text-gray-700">
+                <span>App Memory</span>
+                <span className="font-black">{stats?.system_health?.mem_usage || 0} MB</span>
+              </div>
+              <ProgressBar value={Math.min((stats?.system_health?.mem_usage || 0) / 1024 * 100, 100)} color="bg-lime-neon" trackColor="bg-gray-100" />
+            </div>
+
+            <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+              <span className="flex items-center gap-2 font-bold text-gray-600"><Activity className="w-4 h-4 text-accent" /> Goroutines</span>
+              <span className="font-mono text-xl font-bold">{stats?.system_health?.num_goroutine || 0}</span>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <span className="flex items-center gap-2 font-bold text-gray-600"><Clock className="w-4 h-4 text-gray-400" /> Uptime</span>
+              <span className="font-mono text-sm font-medium text-gray-500">{stats?.system_health?.uptime || "0s"}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 mt-auto">
+              <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">SMTP: Online</Badge>
+              <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">IMAP: Online</Badge>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. TOP ACTIVE ALIASES (Row 2, Col 1) */}
+        <section className="brutalist-card p-6 bg-white min-h-[300px]">
           <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-purple-600" />
             Top Active Aliases
@@ -128,71 +164,30 @@ const DashboardTab = () => {
           </div>
         </section>
 
-        {/* 3. SYSTEM HEALTH & QUICK ACTIONS */}
-        <div className="space-y-6">
-          {/* Health */}
-          <section className="brutalist-card p-6 bg-white transition-transform hover:translate-y-[-4px]">
-            <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2 text-electric-blue">
-              <Server className="w-6 h-6" /> System Health
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between mb-2 text-sm font-bold text-gray-700">
-                  <span>CPU Usage</span>
-                  <span className="text-electric-blue font-black">{stats?.system_health?.cpu_usage?.toFixed(1) || 0}%</span>
+        {/* 5. RECENT ACTIVITY (Row 2, Col 2) */}
+        <section className="brutalist-card p-6 bg-white min-h-[300px]">
+          <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+            <Play className="w-5 h-5" /> Recent Activity
+          </h3>
+          <div className="space-y-3 relative">
+            {/* Timeline line */}
+            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-slate-100" />
+
+            {stats?.recent_logs?.map((log: any, i: number) => (
+              <div key={i} className="flex gap-3 relative">
+                <div className={`mt-1 w-4 h-4 rounded-full border-2 border-white shrink-0 z-10 ${log.level === 'ERROR' ? 'bg-red-500' : 'bg-electric-blue'}`} />
+                <div className="text-sm">
+                  <p className="font-semibold text-xs text-gray-400 mb-0.5">{format(new Date(log.created_at), "HH:mm:ss")}</p>
+                  <p className="leading-tight line-clamp-2">{log.message}</p>
                 </div>
-                <ProgressBar value={stats?.system_health?.cpu_usage || 0} color="bg-electric-blue" trackColor="bg-gray-100" />
               </div>
+            ))}
+            {(!stats?.recent_logs || stats.recent_logs.length === 0) && (
+              <p className="text-sm text-gray-500 italic pl-6">No recent logs.</p>
+            )}
+          </div>
+        </section>
 
-              <div>
-                <div className="flex justify-between mb-2 text-sm font-bold text-gray-700">
-                  <span>App Memory</span>
-                  <span className="font-black">{stats?.system_health?.mem_usage || 0} MB</span>
-                </div>
-                <ProgressBar value={Math.min((stats?.system_health?.mem_usage || 0) / 1024 * 100, 100)} color="bg-lime-neon" trackColor="bg-gray-100" />
-              </div>
-
-              <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                <span className="flex items-center gap-2 font-bold text-gray-600"><Activity className="w-4 h-4 text-accent" /> Goroutines</span>
-                <span className="font-mono text-xl font-bold">{stats?.system_health?.num_goroutine || 0}</span>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="flex items-center gap-2 font-bold text-gray-600"><Clock className="w-4 h-4 text-gray-400" /> Uptime</span>
-                <span className="font-mono text-sm font-medium text-gray-500">{stats?.system_health?.uptime || "0s"}</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-                <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">SMTP: Online</Badge>
-                <Badge variant="outline" className="justify-center bg-green-50 text-green-700 border-green-200">IMAP: Online</Badge>
-              </div>
-            </div>
-          </section>
-
-          {/* Recent Logs (Mini) */}
-          <section className="brutalist-card p-6 bg-white">
-            <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-              <Play className="w-5 h-5" /> Recent Activity
-            </h3>
-            <div className="space-y-3 relative">
-              {/* Timeline line */}
-              <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-slate-100" />
-
-              {stats?.recent_logs?.map((log: any, i: number) => (
-                <div key={i} className="flex gap-3 relative">
-                  <div className={`mt-1 w-4 h-4 rounded-full border-2 border-white shrink-0 z-10 ${log.level === 'ERROR' ? 'bg-red-500' : 'bg-electric-blue'}`} />
-                  <div className="text-sm">
-                    <p className="font-semibold text-xs text-gray-400 mb-0.5">{format(new Date(log.created_at), "HH:mm:ss")}</p>
-                    <p className="leading-tight line-clamp-2">{log.message}</p>
-                  </div>
-                </div>
-              ))}
-              {(!stats?.recent_logs || stats.recent_logs.length === 0) && (
-                <p className="text-sm text-gray-500 italic pl-6">No recent logs.</p>
-              )}
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   );
