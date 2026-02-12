@@ -14,6 +14,7 @@ const MaintenanceTab = () => {
   // Config State
   const [retentionDays, setRetentionDays] = useState(0); // 0 = default logic
   const [targets, setTargets] = useState<string[]>(["anon_mails", "user_mails"]);
+  const scrollRef = import.meta.env ? require('react').useRef<HTMLDivElement>(null) : null; // Safe ref
 
   // Cleanup Mutation
   const cleanupMutation = useMutation({
@@ -41,9 +42,21 @@ const MaintenanceTab = () => {
 
   useEffect(() => {
     if (serverLogs) {
-      setLogs(serverLogs);
+      // Robust Sort: Newest First
+      const sorted = [...serverLogs].sort((a: any, b: any) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      setLogs(sorted);
     }
   }, [serverLogs]);
+
+  // Auto-scroll to bottom on new logs
+  useEffect(() => {
+    const viewport = document.getElementById("console-viewport");
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, [logs]);
 
   const toggleTarget = (t: string) => {
     setTargets(prev =>
@@ -173,7 +186,7 @@ const MaintenanceTab = () => {
             </div>
           </div>
 
-          <div className="bg-[#0f0f0f] rounded-xl border-4 border-gray-800 p-4 font-mono text-sm h-[500px] overflow-y-auto shadow-2xl relative">
+          <div id="console-viewport" className="bg-[#0f0f0f] rounded-xl border-4 border-gray-800 p-4 font-mono text-sm h-[500px] overflow-y-auto shadow-2xl relative scroll-smooth">
             {/* Scanlines effect */}
             <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 bg-[length:100%_2px,3px_100%]"></div>
 
@@ -181,7 +194,8 @@ const MaintenanceTab = () => {
               {logs.length === 0 ? (
                 <div className="text-gray-500 italic">Waiting for logs...</div>
               ) : (
-                logs.slice(0, 50).reverse().map((log, i) => (
+                // Take 100 Newest -> Reverse to show Oldest at top, Newest at bottom
+                logs.slice(0, 100).reverse().map((log, i) => (
                   <div key={i} className="flex gap-4 border-b border-gray-800/50 pb-1 mb-1">
                     <span className="text-blue-400 select-none">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     <span className={log.level === "ERROR" ? "text-red-500 font-bold" : "text-green-400"}>
