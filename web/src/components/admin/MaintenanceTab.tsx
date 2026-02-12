@@ -197,8 +197,8 @@ const MaintenanceTab = () => {
               {logs.length === 0 ? (
                 <div className="text-gray-500 italic">Waiting for logs...</div>
               ) : (
-                // Take 100 Newest -> Reverse to show Oldest at top, Newest at bottom
-                logs.slice(0, 100).reverse().map((log, i) => (
+                // Take 200 Newest -> Reverse to show Oldest at top, Newest at bottom
+                logs.slice(0, 200).reverse().map((log, i) => (
                   <div key={i} className="flex gap-4 border-b border-gray-800/50 pb-1 mb-1">
                     <span className="text-blue-400 select-none">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     <span className={log.level === "ERROR" ? "text-red-500 font-bold" : "text-green-400"}>

@@ -31,7 +31,7 @@ func (l *LogBuffer) Get() []LogEntry {
 	var logs []models.SystemLog
 	var entries []LogEntry
 
-	database.DB.Order("created_at desc").Limit(100).Find(&logs)
+	database.DB.Order("created_at desc").Limit(200).Find(&logs)
 
 	for _, log := range logs {
 		entries = append(entries, LogEntry{
