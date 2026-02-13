@@ -165,22 +165,30 @@ func (h *AdminHandler) TransferAlias(c *fiber.Ctx) error {
 func (h *AdminHandler) TransferAliases(c *fiber.Ctx) error {
 	var req struct {
 		AliasIDs  []string `json:"alias_ids"`
+		Emails    []string `json:"emails"` // Support for bulk paste
 		NewUserID string   `json:"new_user_id"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return utils.Error(c, "Invalid request body", 400)
 	}
 
-	if len(req.AliasIDs) == 0 {
-		return utils.Error(c, "No aliases provided", 400)
-	}
 	if req.NewUserID == "" {
 		return utils.Error(c, "new_user_id required", 400)
 	}
 
-	if err := h.service.TransferAliases(req.AliasIDs, req.NewUserID); err != nil {
-		return utils.Error(c, "Failed to transfer aliases", 500)
+	// Prioritize Emails if provided (from Paste) or fallback to IDs
+	if len(req.Emails) > 0 {
+		if err := h.service.TransferAliasesByEmail(req.Emails, req.NewUserID); err != nil {
+			return utils.Error(c, "Failed to transfer aliases by email", 500)
+		}
+	} else if len(req.AliasIDs) > 0 {
+		if err := h.service.TransferAliases(req.AliasIDs, req.NewUserID); err != nil {
+			return utils.Error(c, "Failed to transfer aliases", 500)
+		}
+	} else {
+		return utils.Error(c, "No aliases or emails provided", 400)
 	}
+
 	return utils.Success(c, nil)
 }
 

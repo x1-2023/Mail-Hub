@@ -280,6 +280,26 @@ func (s *AdminService) TransferAliases(aliasIDs []string, newUserID string) erro
 	return database.DB.Model(&models.Alias{}).Where("id IN ?", aliasIDs).Updates(updates).Error
 }
 
+// TransferAliasesByEmail transfers multiple aliases by their email address
+func (s *AdminService) TransferAliasesByEmail(emails []string, newUserID string) error {
+	if len(emails) == 0 {
+		return nil
+	}
+	updates := map[string]interface{}{
+		"user_id":            newUserID,
+		"owner_type":         "user",
+		"claimed_by_user_id": newUserID,
+		"expires_at":         gorm.Expr("NULL"),
+	}
+	
+	// Postgres specific: filter by constructed email string
+	// casting ::text to be safe with UUIDs
+	return database.DB.Model(&models.Alias{}).
+		Joins("JOIN domains ON domains.id::text = aliases.domain_id::text").
+		Where("(aliases.local_part || '@' || domains.domain) IN ?", emails).
+		Updates(updates).Error
+}
+
 // ToggleAliasActive enables or disables an alias
 func (s *AdminService) ToggleAliasActive(aliasID string, isActive bool) error {
 	return database.DB.Model(&models.Alias{}).Where("id = ?", aliasID).Update("is_active", isActive).Error

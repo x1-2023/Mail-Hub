@@ -23,6 +23,7 @@ const AliasesTab = () => {
     const [transferModal, setTransferModal] = useState<{ aliasIds: string[]; currentEmail?: string } | null>(null); // Modified for Bulk
     const [newUserId, setNewUserId] = useState("");
     const [selectedAliases, setSelectedAliases] = useState<string[]>([]); // New: Bulk Selection
+    const [pasteInput, setPasteInput] = useState(""); // New: Paste Input
 
     // Calculate offset for server-side pagination
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -70,18 +71,20 @@ const AliasesTab = () => {
 
     // Bulk Transfer Mutation
     const transferMutation = useMutation({
-        mutationFn: async ({ aliasIds, newUserId }: { aliasIds: string[]; newUserId: string }) => {
+        mutationFn: async ({ aliasIds, newUserId, emails }: { aliasIds: string[]; newUserId: string; emails?: string[] }) => {
             // Use bulk endpoint if multiple, or singular if just one (though bulk endpoint handles one too)
             // Let's stick to bulk endpoint for simplicity if we implemented it, 
             // OR use loop if we didn't (but we DID implement bulk in backend).
-            return API.transferAliases(aliasIds, newUserId);
+            return API.transferAliases(aliasIds, newUserId, emails);
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["admin-aliases"] });
-            toast.success(`Transferred ${variables.aliasIds.length} aliases successfully`);
+            const count = variables.aliasIds.length > 0 ? variables.aliasIds.length : (variables.emails?.length || 0);
+            toast.success(`Transferred ~${count} aliases successfully`);
             setTransferModal(null);
             setNewUserId("");
             setSelectedAliases([]); // Clear selection
+            setPasteInput(""); // Clear paste
         },
         onError: (err: any) => {
             toast.error(err.response?.data?.error || "Failed to transfer aliases");
@@ -96,7 +99,17 @@ const AliasesTab = () => {
 
     const handleTransfer = () => {
         if (!transferModal || !newUserId) return;
-        transferMutation.mutate({ aliasIds: transferModal.aliasIds, newUserId });
+
+        let emails: string[] = [];
+        if (pasteInput.trim()) {
+            emails = pasteInput.split('\n').map(e => e.trim()).filter(e => e !== "");
+        }
+
+        transferMutation.mutate({
+            aliasIds: transferModal.aliasIds || [],
+            newUserId,
+            emails: emails.length > 0 ? emails : undefined
+        });
     };
 
     // Client-side filtering for search
@@ -150,7 +163,7 @@ const AliasesTab = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {selectedAliases.length > 0 && (
+                    {selectedAliases.length > 0 ? (
                         <Button
                             variant="secondary"
                             className="brutalist-button bg-electric-blue text-white hover:bg-electric-blue/90"
@@ -158,6 +171,15 @@ const AliasesTab = () => {
                         >
                             <ArrowRightLeft className="w-4 h-4 mr-2" />
                             Transfer Selected ({selectedAliases.length})
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            className="brutalist-button border-2"
+                            onClick={() => setTransferModal({ aliasIds: [] })}
+                        >
+                            <ArrowRightLeft className="w-4 h-4 mr-2" />
+                            Bulk Transfer (Paste)
                         </Button>
                     )}
                     <Badge variant="outline" className="text-lg font-mono px-4 py-2 border-2">
@@ -418,20 +440,22 @@ const AliasesTab = () => {
                 </div>
             )}
 
-            {/* Transfer Modal - Updated with USER SELECTOR */}
+            {/* Transfer Modal - Updated with USER SELECTOR & PASTE MODE */}
             <Dialog open={!!transferModal} onOpenChange={() => setTransferModal(null)}>
                 <DialogContent className="brutalist-card">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-black uppercase">Transfer {transferModal?.aliasIds.length === 1 ? 'Alias' : 'Aliases'}</DialogTitle>
+                        <DialogTitle className="text-xl font-black uppercase">Transfer Aliases</DialogTitle>
                         <DialogDescription>
-                            Transferring {transferModal?.aliasIds.length} alias(es) to a specific user.
+                            {transferModal?.aliasIds && transferModal.aliasIds.length > 0
+                                ? `Transferring ${transferModal.aliasIds.length} selected alias(es) to a specific user.`
+                                : "Paste email addresses to transfer them in bulk."}
                             {transferModal?.currentEmail && <span className="block font-mono font-bold mt-1 text-black">{transferModal.currentEmail}</span>}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
+                        {/* User Selector */}
                         <div className="space-y-2">
                             <Label className="font-bold uppercase text-sm">Select New Owner</Label>
-
                             <Select onValueChange={setNewUserId} value={newUserId}>
                                 <SelectTrigger className="brutalist-input w-full">
                                     <SelectValue placeholder="Select a user..." />
@@ -448,14 +472,29 @@ const AliasesTab = () => {
                                     {!usersData && <SelectItem value="loading" disabled>Loading users...</SelectItem>}
                                 </SelectContent>
                             </Select>
-
-                            <p className="text-xs text-muted-foreground">
-                                All selected aliases will be permanently transferred to this user.
-                            </p>
                         </div>
+
+                        {/* Paste Area (Only if no IDs selected) */}
+                        {(!transferModal?.aliasIds || transferModal.aliasIds.length === 0) && (
+                            <div className="space-y-2">
+                                <Label className="font-bold uppercase text-sm">Paste Emails (One per line)</Label>
+                                <textarea
+                                    className="brutalist-input w-full min-h-[150px] font-mono text-sm p-3"
+                                    placeholder={`alice@example.com\nbob@example.com`}
+                                    value={pasteInput}
+                                    onChange={(e) => setPasteInput(e.target.value)}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Only valid emails found in the system will be transferred.
+                                </p>
+                            </div>
+                        )}
+
                         <Button
                             onClick={handleTransfer}
-                            disabled={!newUserId || transferMutation.isPending}
+                            disabled={!newUserId || transferMutation.isPending || (
+                                (!transferModal?.aliasIds?.length) && !pasteInput.trim()
+                            )}
                             className="w-full brutalist-button gradient-hero text-accent-foreground"
                         >
                             {transferMutation.isPending ? (
