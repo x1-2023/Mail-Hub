@@ -464,8 +464,8 @@ const AliasesTab = () => {
                                     {usersData?.map((user: any) => (
                                         <SelectItem key={user.id} value={user.id}>
                                             <div className="flex flex-col text-left">
-                                                <span className="font-bold">{user.username || "No Username"}</span>
-                                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                                                <span className="font-bold">{user.email || "No Email"}</span>
+                                                <span className="text-xs text-muted-foreground">{user.username || "No Username"}</span>
                                             </div>
                                         </SelectItem>
                                     ))}
