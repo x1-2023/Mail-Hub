@@ -256,7 +256,7 @@ func (s *AdminService) DeleteAlias(id string) error {
 
 // TransferAlias transfers a single alias to a different user
 func (s *AdminService) TransferAlias(aliasID, newUserID string) error {
-	updates := map[string]interface{
+	updates := map[string]interface{}{
 		"user_id":            newUserID,
 		"owner_type":         "user",
 		"claimed_by_user_id": newUserID,
@@ -270,7 +270,7 @@ func (s *AdminService) TransferAliases(aliasIDs []string, newUserID string) erro
 	if len(aliasIDs) == 0 {
 		return nil
 	}
-	updates := map[string]interface{
+	updates := map[string]interface{}{
 		"user_id":            newUserID,
 		"owner_type":         "user",
 		"claimed_by_user_id": newUserID,
@@ -291,7 +291,7 @@ func (s *AdminService) TransferAliasesByEmail(emails []string, newUserID string)
 		"claimed_by_user_id": newUserID,
 		"expires_at":         gorm.Expr("NULL"),
 	}
-	
+
 	// Postgres specific: filter by constructed email string
 	// casting ::text to be safe with UUIDs
 	return database.DB.Model(&models.Alias{}).
