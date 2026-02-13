@@ -187,7 +187,33 @@ export const LeftSidebar = () => {
           <div className="flex gap-2">
             <Input
               value={customAlias}
-              onChange={(e) => setCustomAlias(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                // Smart Paste Logic
+                if (val.includes("@")) {
+                  const parts = val.split("@");
+                  if (parts.length === 2 && parts[1]) {
+                    const local = parts[0];
+                    const domain = parts[1];
+
+                    // Check if domain is in available list
+                    const foundDomain = displayDomains.find(d => d.toLowerCase() === domain.toLowerCase());
+
+                    if (foundDomain) {
+                      // Switch domain and set local part
+                      setSelectedDomain(foundDomain);
+                      setCustomAlias(local);
+                      toast.success(`Switched domain to @${foundDomain}`);
+                      return;
+                    } else if (domain.toLowerCase() === selectedDomain.toLowerCase()) {
+                      // Just strip domain if it matches current
+                      setCustomAlias(local);
+                      return;
+                    }
+                  }
+                }
+                setCustomAlias(val);
+              }}
               placeholder={t("sidebar.enterUsername")}
               className="brutalist-input flex-1 font-mono font-bold"
             />
