@@ -68,6 +68,7 @@ const API = {
     getAliases: (limit = 500, offset = 0) => axiosInstance.get(`/admin/aliases?limit=${limit}&offset=${offset}`),
     deleteAlias: (id: string) => axiosInstance.delete(`/admin/aliases/${id}`),
     transferAlias: (id: string, newUserId: string) => axiosInstance.post(`/admin/aliases/${id}/transfer`, { new_user_id: newUserId }),
+    transferAliases: (aliasIds: string[], newUserId: string) => axiosInstance.post(`/admin/aliases/transfer/bulk`, { alias_ids: aliasIds, new_user_id: newUserId }),
     toggleAliasActive: (id: string, isActive: boolean) => axiosInstance.put(`/admin/aliases/${id}/toggle`, { is_active: isActive }),
     createUser: (data: any) => axiosInstance.post("/admin/users", data),
     migrateUsers: (path?: string) => axiosInstance.post("/admin/users/migrate", { path }),

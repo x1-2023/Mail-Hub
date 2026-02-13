@@ -113,6 +113,7 @@ func main() {
 	admin.Post("/domains", adminHandler.CreateDomain)
 	admin.Get("/aliases", adminHandler.GetAliases)
 	admin.Delete("/aliases/:id", adminHandler.DeleteAlias)
+	admin.Post("/aliases/transfer/bulk", adminHandler.TransferAliases)
 	admin.Post("/aliases/:id/transfer", adminHandler.TransferAlias)
 	admin.Put("/aliases/:id/toggle", adminHandler.ToggleAliasActive)
 	admin.Get("/emails", adminHandler.GetEmails)

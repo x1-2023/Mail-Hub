@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Key, Trash2, ArrowRightLeft, Loader2, Search, Mail, User, Globe, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Key, Trash2, ArrowRightLeft, Loader2, Search, Mail, User, Globe, Clock, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/lib/api";
@@ -10,6 +11,8 @@ import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 50; // 50 per page for server pagination
 
@@ -17,19 +20,30 @@ const AliasesTab = () => {
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const [transferModal, setTransferModal] = useState<{ aliasId: string; currentEmail: string } | null>(null);
+    const [transferModal, setTransferModal] = useState<{ aliasIds: string[]; currentEmail?: string } | null>(null); // Modified for Bulk
     const [newUserId, setNewUserId] = useState("");
+    const [selectedAliases, setSelectedAliases] = useState<string[]>([]); // New: Bulk Selection
 
     // Calculate offset for server-side pagination
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
+    // Fetch Aliases
     const { data: aliasData, isLoading } = useQuery({
-        queryKey: ["admin-aliases", currentPage, searchQuery], // Re-fetch on page/search change
+        queryKey: ["admin-aliases", currentPage, searchQuery],
         queryFn: async () => {
-            // Note: Search is currently client-side. For server-side search, backend needs to support it.
             const res = await API.getAliases(ITEMS_PER_PAGE, offset);
             return res.data.data;
         }
+    });
+
+    // Fetch Users (for Transfer Selector)
+    const { data: usersData } = useQuery({
+        queryKey: ["admin-users-list"],
+        queryFn: async () => {
+            const res = await API.getUsers();
+            return res.data.data.users; // Assuming returns { users: [], total: 0 }
+        },
+        staleTime: 60000 // Cache for 1 min
     });
 
     const aliases = aliasData?.aliases || [];
@@ -54,16 +68,24 @@ const AliasesTab = () => {
         onError: () => toast.error("Failed to update alias")
     });
 
+    // Bulk Transfer Mutation
     const transferMutation = useMutation({
-        mutationFn: async ({ id, newUserId }: { id: string; newUserId: string }) =>
-            API.transferAlias(id, newUserId),
-        onSuccess: () => {
+        mutationFn: async ({ aliasIds, newUserId }: { aliasIds: string[]; newUserId: string }) => {
+            // Use bulk endpoint if multiple, or singular if just one (though bulk endpoint handles one too)
+            // Let's stick to bulk endpoint for simplicity if we implemented it, 
+            // OR use loop if we didn't (but we DID implement bulk in backend).
+            return API.transferAliases(aliasIds, newUserId);
+        },
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["admin-aliases"] });
-            toast.success("Alias transferred successfully");
+            toast.success(`Transferred ${variables.aliasIds.length} aliases successfully`);
             setTransferModal(null);
             setNewUserId("");
+            setSelectedAliases([]); // Clear selection
         },
-        onError: () => toast.error("Failed to transfer alias")
+        onError: (err: any) => {
+            toast.error(err.response?.data?.error || "Failed to transfer aliases");
+        }
     });
 
     const handleDelete = (id: string, email: string) => {
@@ -73,22 +95,40 @@ const AliasesTab = () => {
     };
 
     const handleTransfer = () => {
-        if (!transferModal || !newUserId.trim()) return;
-        transferMutation.mutate({ id: transferModal.aliasId, newUserId: newUserId.trim() });
+        if (!transferModal || !newUserId) return;
+        transferMutation.mutate({ aliasIds: transferModal.aliasIds, newUserId });
     };
 
-    // Client-side filtering for search (server can be updated later for search)
-    const filteredAliases = searchQuery
-        ? aliases.filter((alias: any) => {
+    // Client-side filtering for search
+    const filteredAliases = useMemo(() => {
+        if (!searchQuery) return aliases;
+        return aliases.filter((alias: any) => {
             const email = `${alias.local_part}@${alias.domain?.domain || ""}`.toLowerCase();
             return email.includes(searchQuery.toLowerCase());
-        })
-        : aliases;
+        });
+    }, [aliases, searchQuery]);
 
-    // Server-side pagination - total pages from backend
+    // Handle Checkbox Selection
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            const allIds = filteredAliases.map((a: any) => a.id);
+            setSelectedAliases(allIds);
+        } else {
+            setSelectedAliases([]);
+        }
+    };
+
+    const handleSelectOne = (id: string, checked: boolean) => {
+        if (checked) {
+            setSelectedAliases(prev => [...prev, id]);
+        } else {
+            setSelectedAliases(prev => prev.filter(x => x !== id));
+        }
+    };
+
+    // Server-side pagination
     const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
-    // Reset to page 1 when search changes
     const handleSearch = (value: string) => {
         setSearchQuery(value);
         setCurrentPage(1);
@@ -109,9 +149,21 @@ const AliasesTab = () => {
                         </p>
                     </div>
                 </div>
-                <Badge variant="outline" className="text-lg font-mono px-4 py-2 border-2">
-                    {total} Total Aliases
-                </Badge>
+                <div className="flex items-center gap-2">
+                    {selectedAliases.length > 0 && (
+                        <Button
+                            variant="secondary"
+                            className="brutalist-button bg-electric-blue text-white hover:bg-electric-blue/90"
+                            onClick={() => setTransferModal({ aliasIds: selectedAliases })}
+                        >
+                            <ArrowRightLeft className="w-4 h-4 mr-2" />
+                            Transfer Selected ({selectedAliases.length})
+                        </Button>
+                    )}
+                    <Badge variant="outline" className="text-lg font-mono px-4 py-2 border-2">
+                        {total} Total Aliases
+                    </Badge>
+                </div>
             </div>
 
             {/* Search */}
@@ -175,6 +227,13 @@ const AliasesTab = () => {
                 <table className="w-full">
                     <thead className="bg-black text-white">
                         <tr>
+                            <th className="p-4 w-10">
+                                <Checkbox
+                                    checked={filteredAliases.length > 0 && selectedAliases.length === filteredAliases.length}
+                                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                                    className="border-white data-[state=checked]:bg-lime-neon data-[state=checked]:text-black"
+                                />
+                            </th>
                             <th className="text-left p-4 uppercase text-sm font-black">Alias Email</th>
                             <th className="text-left p-4 uppercase text-sm font-black">Owner</th>
                             <th className="text-left p-4 uppercase text-sm font-black">Type</th>
@@ -186,7 +245,7 @@ const AliasesTab = () => {
                     <tbody>
                         {filteredAliases.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                <td colSpan={7} className="p-8 text-center text-muted-foreground">
                                     <Mail className="w-12 h-12 mx-auto mb-3 opacity-30" />
                                     <p className="font-bold">No aliases found</p>
                                 </td>
@@ -194,12 +253,19 @@ const AliasesTab = () => {
                         ) : (
                             filteredAliases.map((alias: any, index: number) => {
                                 const email = `${alias.local_part}@${alias.domain?.domain || "unknown"}`;
+                                const isSelected = selectedAliases.includes(alias.id);
                                 return (
                                     <tr
                                         key={alias.id}
                                         className={`border-b-2 border-border hover:bg-lime-neon/20 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-muted/30"
-                                            }`}
+                                            } ${isSelected ? "bg-lime-neon/10" : ""}`}
                                     >
+                                        <td className="p-4">
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onCheckedChange={(checked) => handleSelectOne(alias.id, checked as boolean)}
+                                            />
+                                        </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg border-2 border-border bg-electric-blue/20 flex items-center justify-center font-black text-lg">
@@ -255,7 +321,7 @@ const AliasesTab = () => {
                                         <td className="p-4">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
-                                                    onClick={() => setTransferModal({ aliasId: alias.id, currentEmail: email })}
+                                                    onClick={() => setTransferModal({ aliasIds: [alias.id], currentEmail: email })}
                                                     className="p-2 border-2 border-border rounded-lg bg-white hover:bg-electric-blue/20 transition-all hover:translate-y-[-2px]"
                                                     title="Transfer to another user"
                                                 >
@@ -296,23 +362,18 @@ const AliasesTab = () => {
                             Previous
                         </Button>
                         <div className="flex items-center gap-1">
-                            {/* Smart Pagination with Ellipsis */}
+                            {/* Smart Pagination */}
                             {(() => {
                                 const pages: (number | string)[] = [];
-                                const showPages = 5; // Max pages to show
+                                const showPages = 5;
 
                                 if (totalPages <= showPages + 4) {
-                                    // Show all pages if total is small
                                     for (let i = 1; i <= totalPages; i++) pages.push(i);
                                 } else {
-                                    // Always show first page
                                     pages.push(1);
-
-                                    // Calculate range around current page
                                     let start = Math.max(2, currentPage - 2);
                                     let end = Math.min(totalPages - 1, currentPage + 2);
 
-                                    // Adjust if at edges
                                     if (currentPage <= 3) {
                                         end = Math.min(totalPages - 1, showPages);
                                     } else if (currentPage >= totalPages - 2) {
@@ -322,8 +383,6 @@ const AliasesTab = () => {
                                     if (start > 2) pages.push("...");
                                     for (let i = start; i <= end; i++) pages.push(i);
                                     if (end < totalPages - 1) pages.push("...");
-
-                                    // Always show last page
                                     pages.push(totalPages);
                                 }
 
@@ -359,31 +418,44 @@ const AliasesTab = () => {
                 </div>
             )}
 
-            {/* Transfer Modal */}
+            {/* Transfer Modal - Updated with USER SELECTOR */}
             <Dialog open={!!transferModal} onOpenChange={() => setTransferModal(null)}>
                 <DialogContent className="brutalist-card">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-black uppercase">Transfer Alias</DialogTitle>
+                        <DialogTitle className="text-xl font-black uppercase">Transfer {transferModal?.aliasIds.length === 1 ? 'Alias' : 'Aliases'}</DialogTitle>
                         <DialogDescription>
-                            Transfer "{transferModal?.currentEmail}" to a different user.
+                            Transferring {transferModal?.aliasIds.length} alias(es) to a specific user.
+                            {transferModal?.currentEmail && <span className="block font-mono font-bold mt-1 text-black">{transferModal.currentEmail}</span>}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
                         <div className="space-y-2">
-                            <Label className="font-bold uppercase text-sm">New Owner User ID</Label>
-                            <Input
-                                placeholder="Enter user ID to transfer to..."
-                                value={newUserId}
-                                onChange={(e) => setNewUserId(e.target.value)}
-                                className="brutalist-input font-mono"
-                            />
+                            <Label className="font-bold uppercase text-sm">Select New Owner</Label>
+
+                            <Select onValueChange={setNewUserId} value={newUserId}>
+                                <SelectTrigger className="brutalist-input w-full">
+                                    <SelectValue placeholder="Select a user..." />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px]">
+                                    {usersData?.map((user: any) => (
+                                        <SelectItem key={user.id} value={user.id}>
+                                            <div className="flex flex-col text-left">
+                                                <span className="font-bold">{user.username || "No Username"}</span>
+                                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                    {!usersData && <SelectItem value="loading" disabled>Loading users...</SelectItem>}
+                                </SelectContent>
+                            </Select>
+
                             <p className="text-xs text-muted-foreground">
-                                You can find user IDs in the Users tab
+                                All selected aliases will be permanently transferred to this user.
                             </p>
                         </div>
                         <Button
                             onClick={handleTransfer}
-                            disabled={!newUserId.trim() || transferMutation.isPending}
+                            disabled={!newUserId || transferMutation.isPending}
                             className="w-full brutalist-button gradient-hero text-accent-foreground"
                         >
                             {transferMutation.isPending ? (
@@ -391,7 +463,7 @@ const AliasesTab = () => {
                             ) : (
                                 <ArrowRightLeft className="mr-2 w-4 h-4" />
                             )}
-                            Transfer Alias
+                            Confirm Transfer
                         </Button>
                     </div>
                 </DialogContent>

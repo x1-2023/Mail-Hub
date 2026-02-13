@@ -162,6 +162,28 @@ func (h *AdminHandler) TransferAlias(c *fiber.Ctx) error {
 	return utils.Success(c, nil)
 }
 
+func (h *AdminHandler) TransferAliases(c *fiber.Ctx) error {
+	var req struct {
+		AliasIDs  []string `json:"alias_ids"`
+		NewUserID string   `json:"new_user_id"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, "Invalid request body", 400)
+	}
+
+	if len(req.AliasIDs) == 0 {
+		return utils.Error(c, "No aliases provided", 400)
+	}
+	if req.NewUserID == "" {
+		return utils.Error(c, "new_user_id required", 400)
+	}
+
+	if err := h.service.TransferAliases(req.AliasIDs, req.NewUserID); err != nil {
+		return utils.Error(c, "Failed to transfer aliases", 500)
+	}
+	return utils.Success(c, nil)
+}
+
 func (h *AdminHandler) ToggleAliasActive(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req struct {

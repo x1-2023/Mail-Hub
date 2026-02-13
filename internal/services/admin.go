@@ -254,15 +254,30 @@ func (s *AdminService) DeleteAlias(id string) error {
 	return database.DB.Delete(&models.Alias{}, "id = ?", id).Error
 }
 
-// TransferAlias transfers an alias to a different user
+// TransferAlias transfers a single alias to a different user
 func (s *AdminService) TransferAlias(aliasID, newUserID string) error {
-	updates := map[string]interface{}{
+	updates := map[string]interface{
 		"user_id":            newUserID,
 		"owner_type":         "user",
 		"claimed_by_user_id": newUserID,
-		"expires_at":         nil, // User aliases don't expire
+		"expires_at":         gorm.Expr("NULL"), // Unset expiration for user aliases
 	}
 	return database.DB.Model(&models.Alias{}).Where("id = ?", aliasID).Updates(updates).Error
+}
+
+// TransferAliases transfers multiple aliases to a different user (Bulk)
+func (s *AdminService) TransferAliases(aliasIDs []string, newUserID string) error {
+	if len(aliasIDs) == 0 {
+		return nil
+	}
+	updates := map[string]interface{
+		"user_id":            newUserID,
+		"owner_type":         "user",
+		"claimed_by_user_id": newUserID,
+		"expires_at":         gorm.Expr("NULL"),
+	}
+	// Use IN clause for bulk update
+	return database.DB.Model(&models.Alias{}).Where("id IN ?", aliasIDs).Updates(updates).Error
 }
 
 // ToggleAliasActive enables or disables an alias
