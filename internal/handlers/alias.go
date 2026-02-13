@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AliasHandler struct{}
@@ -62,10 +63,29 @@ func (h *AliasHandler) CreateUserAlias(c *fiber.Ctx) error {
 		return utils.Error(c, "Alias limit reached", 403)
 	}
 
-	// Check for collision
-	var existing int64
-	database.DB.Model(&models.Alias{}).Where("local_part = ? AND domain_id = ?", localPart, domain.ID).Count(&existing)
-	if existing > 0 {
+	// Check for collision or claimable orphan
+	var existingAlias models.Alias
+	err := database.DB.Where("local_part = ? AND domain_id = ?", localPart, domain.ID).First(&existingAlias).Error
+	if err == nil {
+		// ALIAS EXISTS - Check if it's claimable (Anonymous & Unclaimed)
+		if existingAlias.OwnerType == "anonymous" && existingAlias.UserID == nil {
+			// CLAIM IT!
+			updates := map[string]interface{}{
+				"user_id":            userID,
+				"owner_type":         "user",
+				"claimed_by_user_id": userID,
+				"expires_at":         gorm.Expr("NULL"), // Unset expiration
+			}
+			if err := database.DB.Model(&existingAlias).Updates(updates).Error; err != nil {
+				return utils.Error(c, "Failed to claim orphan alias", 500)
+			}
+			// Return successful claim as if created
+			existingAlias.UserID = &userID
+			existingAlias.Domain = domain
+			return utils.Success(c, existingAlias)
+		}
+
+		// Otherwise, it really is a collision
 		return utils.Error(c, "Alias already exists", 409)
 	}
 
