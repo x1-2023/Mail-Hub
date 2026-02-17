@@ -7,10 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
-// LimitGlobal is a general rate limiter for the API (e.g. 100 req/min)
+// LimitGlobal is a general rate limiter for the API (e.g. 2000 req/min)
 func LimitGlobal() fiber.Handler {
 	return limiter.New(limiter.Config{
-		Max:        100,
+		Max:        3000,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
@@ -24,10 +24,10 @@ func LimitGlobal() fiber.Handler {
 }
 
 // LimitStrict is a strict rate limiter for sensitive actions (e.g. creating alias, login)
-// Default: 5 req/min
+// Default: 20 req/min
 func LimitStrict() fiber.Handler {
 	return limiter.New(limiter.Config{
-		Max:        5,
+		Max:        20,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
