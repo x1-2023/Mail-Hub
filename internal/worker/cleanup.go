@@ -80,8 +80,22 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			WHERE e.id = v.id;
 		`, condition)
 
-		if err := runBatch(currentDB(), job1, "Anon Mails"); err != nil {
-			log.Printf("[Maintenance] Job 1 Failed: %v", err)
+		loopCount := 0
+		for {
+			deleted, err := runBatch(currentDB(), job1, "Anon Mails")
+			if err != nil {
+				log.Printf("[Maintenance] Job 1 Failed: %v", err)
+				break
+			}
+			if deleted == 0 {
+				break
+			}
+			loopCount++
+			if loopCount > 100 { // Safety break
+				log.Println("[Maintenance] Job 1 hit safety limit (100k rows). Stopping.")
+				break
+			}
+			time.Sleep(100 * time.Millisecond) // Breath
 		}
 	}
 
@@ -107,8 +121,22 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			WHERE e.id = v.id;
 		`, condition)
 
-		if err := runBatch(currentDB(), job2, "User Mails"); err != nil {
-			log.Printf("[Maintenance] Job 2 Failed: %v", err)
+		loopCount := 0
+		for {
+			deleted, err := runBatch(currentDB(), job2, "User Mails")
+			if err != nil {
+				log.Printf("[Maintenance] Job 2 Failed: %v", err)
+				break
+			}
+			if deleted == 0 {
+				break
+			}
+			loopCount++
+			if loopCount > 100 {
+				log.Println("[Maintenance] Job 2 hit safety limit. Stopping.")
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
@@ -116,6 +144,14 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 	// Target: Any non-starred email that exceeds the per-alias limit (oldest first)
 	// Use Window Function to identify victims efficiently.
 	limit := services.Settings.GetInt("max_emails_per_alias", 100)
+
+	// Complex query with LIMIT inside DELETE is tricky.
+	// Postgres DELETE with LIMIT is not standard but we can use CTID or ID IN subquery.
+	// This query uses ID IN subquery with LIMIT derived from Window Function rank.
+	// We can loop this because if there are still > limit, they will be caught.
+	// Note: We need to limit the DELETION size per batch too.
+	// The inner query selects ALL excess rows. Let's limit the subquery output.
+
 	job3 := fmt.Sprintf(`
 		DELETE FROM emails
 		WHERE id IN (
@@ -125,11 +161,25 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 				WHERE is_starred = FALSE
 			) sub
 			WHERE rn > %d
+			LIMIT 1000
 		);
 	`, limit)
 
-	if err := runBatch(currentDB(), job3, "Rolling Buffer Overflow"); err != nil {
-		log.Printf("[Maintenance] Job 3 Failed: %v", err)
+	loopCount := 0
+	for {
+		deleted, err := runBatch(currentDB(), job3, "Rolling Buffer Overflow")
+		if err != nil {
+			log.Printf("[Maintenance] Job 3 Failed: %v", err)
+			break
+		}
+		if deleted == 0 {
+			break
+		}
+		loopCount++
+		if loopCount > 100 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	// --- Job 4: Unclaimed Aliases ---
@@ -154,8 +204,20 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			WHERE a.id = v.id;
 		`, interval)
 
-		if err := runBatch(currentDB(), job4, "Unclaimed Aliases"); err != nil {
-			log.Printf("[Maintenance] Job 4 Failed: %v", err)
+		loopCount := 0
+		for {
+			deleted, err := runBatch(currentDB(), job4, "Unclaimed Aliases")
+			if err != nil {
+				log.Printf("[Maintenance] Job 4 Failed: %v", err)
+				break
+			}
+			if deleted == 0 {
+				break
+			}
+			loopCount++
+			if loopCount > 50 {
+				break
+			}
 		}
 	}
 
@@ -188,14 +250,14 @@ func currentDB() *gorm.DB {
 	return database.DB
 }
 
-func runBatch(db *gorm.DB, query string, name string) error {
+func runBatch(db *gorm.DB, query string, name string) (int64, error) {
 	// Execute raw SQL
 	result := db.Exec(query)
 	if result.Error != nil {
-		return result.Error
+		return 0, result.Error
 	}
 	if result.RowsAffected > 0 {
 		log.Printf("[Maintenance] %s: Deleted %d rows", name, result.RowsAffected)
 	}
-	return nil
+	return result.RowsAffected, nil
 }
