@@ -221,6 +221,30 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 		}
 	}
 
+	// --- Job 5: Orphaned Email Contents (Safety Net) ---
+	// If CASCADE delete failed or wasn't set up, contents might remain.
+	job5 := `
+		DELETE FROM email_contents
+		WHERE email_id NOT IN (SELECT id FROM emails);
+	`
+	// Loop this too
+	loopCount = 0
+	for {
+		deleted, err := runBatch(currentDB(), job5, "Orphaned Contents")
+		if err != nil {
+			log.Printf("[Maintenance] Job 5 Failed: %v", err)
+			break
+		}
+		if deleted == 0 {
+			break
+		}
+		loopCount++
+		if loopCount > 100 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
 	// --- Job 7: Vacuum (Explicit Trigger Only) ---
 	runVacuum := false
 	for _, t := range opts.Targets {
@@ -231,10 +255,11 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 	}
 
 	if runVacuum {
-		log.Println("[Maintenance] Running VACUUM...")
+		log.Println("[Maintenance] Running VACUUM FULL...")
 		// Note: VACUUM cannot run within a transaction block in PostgreSQL
 		// GORM's Exec does not start a transaction by default, so this is safe.
-		if err := database.DB.Exec("VACUUM").Error; err != nil {
+		// Use VACUUM FULL to reclaim disk space immediately (locks table, but ok for maintenance)
+		if err := database.DB.Exec("VACUUM FULL").Error; err != nil {
 			log.Printf("[Maintenance] Vacuum Failed: %v", err)
 		} else {
 			log.Println("[Maintenance] Vacuum Completed")
