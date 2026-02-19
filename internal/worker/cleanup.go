@@ -69,7 +69,7 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			WITH victims AS (
 				SELECT e.id
 				FROM emails e
-				LEFT JOIN aliases a ON a.id = e.alias_id
+				LEFT JOIN aliases a ON a.id::text = e.alias_id::text
 				WHERE e.is_starred = FALSE
 					AND %s
 					AND (e.alias_id IS NULL OR a.owner_type = 'anonymous')
@@ -77,7 +77,7 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			)
 			DELETE FROM emails e
 			USING victims v
-			WHERE e.id = v.id;
+			WHERE e.id::text = v.id::text;
 		`, condition)
 
 		loopCount := 0
@@ -110,7 +110,7 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			WITH victims AS (
 				SELECT e.id
 				FROM emails e
-				JOIN aliases a ON a.id = e.alias_id
+				JOIN aliases a ON a.id::text = e.alias_id::text
 				WHERE e.is_starred = FALSE
 					AND %s
 					AND a.owner_type = 'user'
@@ -118,7 +118,7 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 			)
 			DELETE FROM emails e
 			USING victims v
-			WHERE e.id = v.id;
+			WHERE e.id::text = v.id::text;
 		`, condition)
 
 		loopCount := 0
@@ -154,9 +154,9 @@ func HandleCleanup(ctx context.Context, t *asynq.Task) error {
 
 	job3 := fmt.Sprintf(`
 		DELETE FROM emails
-		WHERE id IN (
+		WHERE id::text IN (
 			SELECT id FROM (
-				SELECT id, ROW_NUMBER() OVER (PARTITION BY alias_id ORDER BY received_at DESC) as rn
+				SELECT id::text, ROW_NUMBER() OVER (PARTITION BY alias_id ORDER BY received_at DESC) as rn
 				FROM emails
 				WHERE is_starred = FALSE
 			) sub
