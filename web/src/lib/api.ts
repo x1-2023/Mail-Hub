@@ -20,9 +20,21 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const hadUserSession = Boolean(localStorage.getItem("mh_token"));
+        const requestUrl = String(error.config?.url || "");
+        const isAuthRequest = requestUrl.startsWith("/auth/");
+
+        // A 401 can also mean an anonymous mailbox token has expired. Only
+        // expire the login session when one actually exists; public users must
+        // remain on the anonymous inbox instead of being forced to /auth.
+        if (error.response?.status === 401 && hadUserSession) {
             localStorage.removeItem("mh_token");
-            window.location.href = "/auth";
+            localStorage.removeItem("mh_user");
+
+            if (!isAuthRequest) {
+                const destination = window.location.pathname.startsWith("/admin") ? "/auth" : "/";
+                window.location.replace(destination);
+            }
         }
         return Promise.reject(error);
     }

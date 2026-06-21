@@ -26,11 +26,30 @@ interface AnonState {
 
 const AnonContext = createContext<AnonState | undefined>(undefined);
 
+const getStoredAnonValue = (key: string) => {
+    if (localStorage.getItem("mh_token")) return null;
+    return localStorage.getItem(key);
+};
+
+const isExpired = (expiresAt: string | null) => {
+    if (!expiresAt) return false;
+    const expiresAtMs = Date.parse(expiresAt);
+    return Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now();
+};
+
 export const AnonProvider = ({ children }: { children: React.ReactNode }) => {
     // Initial state from local storage (default for anon)
-    const [address, setAddress] = useState<string | null>(localStorage.getItem("anon_address"));
-    const [token, setToken] = useState<string | null>(localStorage.getItem("anon_token"));
-    const [expiresAt, setExpiresAt] = useState<string | null>(localStorage.getItem("anon_expires"));
+    const storedExpiresAt = getStoredAnonValue("anon_expires");
+    const storedIdentityExpired = isExpired(storedExpiresAt);
+    const [address, setAddress] = useState<string | null>(
+        storedIdentityExpired ? null : getStoredAnonValue("anon_address")
+    );
+    const [token, setToken] = useState<string | null>(
+        storedIdentityExpired ? null : getStoredAnonValue("anon_token")
+    );
+    const [expiresAt, setExpiresAt] = useState<string | null>(
+        storedIdentityExpired ? null : storedExpiresAt
+    );
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -38,9 +57,22 @@ export const AnonProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const stored = localStorage.getItem("anon_history");
         if (stored) {
-            setHistory(JSON.parse(stored));
+            try {
+                const parsed = JSON.parse(stored) as HistoryItem[];
+                const activeHistory = parsed.filter(item => !isExpired(item.expiresAt));
+                setHistory(activeHistory);
+                localStorage.setItem("anon_history", JSON.stringify(activeHistory));
+            } catch {
+                localStorage.removeItem("anon_history");
+            }
         }
-    }, []);
+
+        if (storedIdentityExpired) {
+            localStorage.removeItem("anon_address");
+            localStorage.removeItem("anon_token");
+            localStorage.removeItem("anon_expires");
+        }
+    }, [storedIdentityExpired]);
 
     // Sync with Database if Logged In
     useEffect(() => {
