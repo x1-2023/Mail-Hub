@@ -22,9 +22,7 @@ type AuthService struct{}
 
 var JwtSecret []byte
 
-func init() {
-	LoadJwtSecret()
-}
+// Removed init() because env isn't loaded yet
 
 func LoadJwtSecret() {
 	// SSO: Prefer SSO_JWT_SECRET for ecosystem-wide auth
