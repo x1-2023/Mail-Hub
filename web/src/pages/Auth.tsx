@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
 import API from "@/lib/api";
 import { toast } from "sonner";
+import { JSEncrypt } from "jsencrypt";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,12 +21,35 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password.length < 8) {
+      toast.error(t("auth.passwordTooShort") || "Password must be at least 8 characters long");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Fetch RSA Public Key
+      const keyRes = await API.getAuthPublicKey();
+      const publicKey = keyRes.data.data.publicKey;
+
+      if (!publicKey) {
+        throw new Error("Failed to retrieve encryption key");
+      }
+
+      // Encrypt password
+      const encryptor = new JSEncrypt();
+      encryptor.setPublicKey(publicKey);
+      const encryptedPassword = encryptor.encrypt(password);
+
+      if (!encryptedPassword) {
+        throw new Error("Failed to encrypt password");
+      }
+
       if (isLogin) {
         // Login
-        const res = await API.login({ email, password });
+        const res = await API.login({ email, password: encryptedPassword });
         const { token, user } = res.data.data;
 
         localStorage.setItem("mh_token", token);
@@ -46,7 +70,7 @@ export default function Auth() {
           return;
         }
 
-        const res = await API.register({ email, password });
+        const res = await API.register({ email, password: encryptedPassword });
         const { token, user } = res.data.data;
 
         localStorage.setItem("mh_token", token);
@@ -58,7 +82,7 @@ export default function Auth() {
       }
     } catch (error: any) {
       console.error(error);
-      const msg = error.response?.data?.message || "Authentication failed";
+      const msg = error.response?.data?.message || error.message || "Authentication failed";
       toast.error(msg);
     } finally {
       setLoading(false);

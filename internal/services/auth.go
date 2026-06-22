@@ -33,7 +33,7 @@ func LoadJwtSecret() {
 		secret = os.Getenv("JWT_SECRET")
 	}
 	if secret == "" {
-		JwtSecret = []byte("default_secret_please_change")
+		log.Fatal("FATAL: JWT_SECRET or SSO_JWT_SECRET is not set in environment variables.")
 	} else {
 		JwtSecret = []byte(secret)
 	}

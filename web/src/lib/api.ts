@@ -42,6 +42,7 @@ axiosInstance.interceptors.response.use(
 
 const API = {
     // Auth
+    getAuthPublicKey: () => axiosInstance.get("/auth/key"),
     register: (data: any) => axiosInstance.post("/auth/register", data),
     login: (data: any) => axiosInstance.post("/auth/login", data),
 

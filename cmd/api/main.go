@@ -73,6 +73,7 @@ func main() {
 	// Auth Routes
 	authHandler := handlers.NewAuthHandler()
 	auth := api.Group("/auth")
+	auth.Get("/key", authHandler.GetPublicKey)
 	auth.Post("/register", middleware.LimitStrict(), authHandler.Register)
 	auth.Post("/login", middleware.LimitStrict(), authHandler.Login)
 
