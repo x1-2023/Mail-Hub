@@ -112,6 +112,7 @@ func main() {
 	admin.Put("/users/:id/role", adminHandler.ChangeUserRole)
 	admin.Get("/domains", adminHandler.GetDomains)
 	admin.Post("/domains", adminHandler.CreateDomain)
+	admin.Delete("/domains/:id", adminHandler.DeleteDomain)
 	admin.Get("/aliases", adminHandler.GetAliases)
 	admin.Delete("/aliases/:id", adminHandler.DeleteAlias)
 	admin.Post("/aliases/transfer/bulk", adminHandler.TransferAliases)
