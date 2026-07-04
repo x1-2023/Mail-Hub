@@ -143,7 +143,7 @@ export const AnonProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (userToken) {
                 // Logged-in: Create in DB
-                const res = await API.createUserAlias(undefined, localPart); // Backend selects domain if undefined
+                const res = await API.createUserAlias(domain, localPart); // Backend selects domain if undefined
                 if (res.data.success) {
                     const alias = res.data.data;
                     const newAddress = `${alias.local_part}@${alias.domain?.domain || "unknown"}`;

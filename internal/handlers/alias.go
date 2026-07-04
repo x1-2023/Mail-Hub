@@ -28,6 +28,7 @@ func (h *AliasHandler) CreateUserAlias(c *fiber.Ctx) error {
 	var req struct {
 		LocalPart string `json:"local_part"`
 		DomainID  string `json:"domain_id"`
+		Domain    string `json:"domain"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return utils.Error(c, "Invalid request body", 400)
@@ -35,13 +36,17 @@ func (h *AliasHandler) CreateUserAlias(c *fiber.Ctx) error {
 
 	// If domain not specified, find a public domain
 	var domain models.Domain
-	if req.DomainID == "" {
-		if err := database.DB.Where("is_public = ?", true).First(&domain).Error; err != nil {
-			return utils.Error(c, "No public domain available", 400)
-		}
-	} else {
+	if req.DomainID != "" {
 		if err := database.DB.First(&domain, "id = ?", req.DomainID).Error; err != nil {
 			return utils.Error(c, "Domain not found", 404)
+		}
+	} else if req.Domain != "" {
+		if err := database.DB.First(&domain, "domain = ?", req.Domain).Error; err != nil {
+			return utils.Error(c, "Domain not found", 404)
+		}
+	} else {
+		if err := database.DB.Where("is_public = ?", true).First(&domain).Error; err != nil {
+			return utils.Error(c, "No public domain available", 400)
 		}
 	}
 

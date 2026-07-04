@@ -58,7 +58,7 @@ const API = {
 
     // User Aliases (for logged-in users)
     getUserAliases: () => axiosInstance.get("/aliases"),
-    createUserAlias: (domainId?: string, localPart?: string) => axiosInstance.post("/aliases", { domain_id: domainId, local_part: localPart }),
+    createUserAlias: (domain?: string, localPart?: string) => axiosInstance.post("/aliases", { domain: domain, local_part: localPart }),
     deleteUserAlias: (id: string) => axiosInstance.delete(`/aliases/${id}`),
 
     // Anon Mail
