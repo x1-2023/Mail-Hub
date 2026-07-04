@@ -95,8 +95,12 @@ func HandleConnection(conn net.Conn) {
 			}
 			// Enqueue Task
 			for _, rcpt := range session.rcptTo {
-				queue.EnqueueEmailTask(session.data, session.mailFrom, rcpt)
-				utils.LogInfo("[SMTP] Email Queued from %s to %s", session.mailFrom, rcpt)
+				err := queue.EnqueueEmailTask(session.data, session.mailFrom, rcpt)
+				if err != nil {
+					utils.LogError("[SMTP] Failed to enqueue email from %s to %s: %v", session.mailFrom, rcpt, err)
+				} else {
+					utils.LogInfo("[SMTP] Email Queued from %s to %s", session.mailFrom, rcpt)
+				}
 			}
 			session.write("250 OK Queued")
 		case "QUIT":
@@ -123,10 +127,17 @@ func (s *Session) readData() error {
 		if err != nil {
 			return err
 		}
-		// Dot stuffing handling needed ideally, but for now check . CRLF
-		if string(line) == ".\r\n" {
+		
+		strLine := string(line)
+		if strLine == ".\r\n" || strLine == ".\n" {
 			break
 		}
+
+		// Dot unstuffing: if line starts with "..", remove one "."
+		if strings.HasPrefix(strLine, "..") {
+			line = line[1:]
+		}
+
 		data = append(data, line...)
 	}
 	s.data = data
