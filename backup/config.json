@@ -1,0 +1,79 @@
+[
+  {
+    "zoneId": "706c4b55109250ad8fdb1f9b2e77e7ef",
+    "recordName": "0xf5.site",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "706c4b55109250ad8fdb1f9b2e77e7ef",
+    "recordName": "mail.0xf5.site",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "04687019bd07e6e4891bd5e6b6af7e65",
+    "recordName": "dns.0xf5.xyz",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "f30b132f929607b44cf1569b0189e687",
+    "recordName": "mail.0xit.me",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "3928969ca79127125b4ee788d4de1c8b",
+    "recordName": "mail.hotmailv.com",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "f30b132f929607b44cf1569b0189e687",
+    "recordName": "0xit.me",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "04687019bd07e6e4891bd5e6b6af7e65",
+    "recordName": "0xf5.xyz",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "7f42ae3231f1e14092c1b2c586ec4b9a",
+    "recordName": "mailhub.webmmo.net",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": true
+  },
+  {
+    "zoneId": "7f42ae3231f1e14092c1b2c586ec4b9a",
+    "recordName": "mail.webmmo.net",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": false
+  },
+  {
+    "zoneId": "8fe94ba4855177fbdb8f95b7099df354",
+    "recordName": "cotphim.xyz",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": true
+  },
+  {
+    "zoneId": "7f42ae3231f1e14092c1b2c586ec4b9a",
+    "recordName": "webmmo.net",
+    "recordType": "A",
+    "ttl": 120,
+    "proxied": true
+  }
+]

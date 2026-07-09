@@ -47,6 +47,7 @@ func main() {
 	mux := asynq.NewServeMux()
 	mux.HandleFunc("email:process", worker.HandleEmailTask)
 	mux.HandleFunc(worker.TypeCleanup, worker.HandleCleanup)
+	mux.HandleFunc(worker.TypeCloudflareSync, worker.HandleCloudflareSync)
 
 	// 5. Setup Scheduler (to enqueue periodic tasks)
 	scheduler := asynq.NewScheduler(
@@ -59,6 +60,11 @@ func main() {
 	// Run every 5 minutes
 	if _, err := scheduler.Register("@every 5m", worker.NewCleanupTask()); err != nil {
 		log.Fatal("Could not register cleanup task: ", err)
+	}
+
+	// Sync Cloudflare IPs every 10 minutes
+	if _, err := scheduler.Register("@every 10m", worker.NewCloudflareSyncTask()); err != nil {
+		log.Fatal("Could not register cloudflare sync task: ", err)
 	}
 
 	// Run Scheduler in background

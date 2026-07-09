@@ -169,6 +169,18 @@ func (s *AdminService) CreateDomain(domain string, isPublic bool) (*models.Domai
 		IsPublic: isPublic,
 	}
 	err := database.DB.Create(d).Error
+	if err == nil {
+		// Try to configure Cloudflare DNS in the background
+		go func() {
+			cfService := NewCloudflareService()
+			if Settings.GetString("cf_api_token", "") != "" {
+				ip, err := cfService.GetPublicIP()
+				if err == nil {
+					_ = cfService.ConfigureMailRecords(domain, ip)
+				}
+			}
+		}()
+	}
 	return d, err
 }
 

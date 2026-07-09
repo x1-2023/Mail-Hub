@@ -137,6 +137,18 @@ const SettingsTab = () => {
             {renderSwitch("allow_legacy_adoption", "Orphan Adoption", "Auto-create alias for incoming mails to unknown users")}
           </CardContent>
         </Card>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5" />
+              Cloudflare Integration
+            </CardTitle>
+            <CardDescription>Automate DNS configuration when adding domains.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {renderField("cf_api_token", "Cloudflare API Token", "Requires Edit Zone DNS permissions (Leave blank to disable automation)")}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
